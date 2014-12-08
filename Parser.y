@@ -9,21 +9,34 @@ import Abs
 %error {parseError}
 
 %token
-      class			{Class _}
-      '{' 			{LeftBraces _}
-      '}'			{RightBraces _}
-      identifier		{Identifier $$ _}
+      class			{ClassToken _}
+      '{' 			{LeftBracesToken _}
+      '}'			{RightBracesToken _}
+      identifier		{IdentifierToken $$ _}
+      public 			{PublicToken _}
+      private			{PrivateToken _}
+      final 			{FinalToken _}
+      static 			{StaticToken _}
 
 %%
 
-ClassDef 		: class identifier '{' '}'			{ ClassDef($2, [], [], []) }
+classdef 		: class identifier '{' '}'			{ ClassDef($2, [], [], [], []) }
+			| modifiers class identifier '{' '}'		{ ClassDef($3, $1, [], [], [])}
 
+
+modifiers 		: modifiers modifier 				{$1 ++ [$2]}
+			| modifier					{[$1]}
+								
+modifier		: public 					{Public}
+			| private 					{Private}
+			| final 					{Final}
+			| static 					{Static}
 
 {
 
 parseError :: [Token] -> a
-parseError _ = error "parsing failed"
+parseError t = error (show t)
 
 main = do
-    print (alexScanTokens "class test { }")
+    putStrLn (drawAst(parseJava(alexScanTokens "public static class test { }")))
 }

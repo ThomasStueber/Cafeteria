@@ -10,118 +10,118 @@ $char = [a-zA-Z]
 tokens :-
   
   -- Java Keywords
-  abstract				{\p -> \s -> Abstract p }
-  assert				{\p -> \s -> Assert p }
-  break					{\p -> \s -> Break p }
-  byte					{\p -> \s -> Byte p }
-  boolean 				{\p -> \s -> Boolean p }
-  case					{\p -> \s -> Case p }
-  catch					{\p -> \s -> Catch p }
-  char 					{\p -> \s -> Char p }
-  class					{\p -> \s -> Class p }
-  continue				{\p -> \s -> Continue p }
-  default				{\p -> \s -> Default p }
-  do					{\p -> \s -> Do p }
-  double				{\p -> \s -> Double p }
-  else					{\p -> \s -> Else p }
-  enum					{\p -> \s -> Enum p }
-  extends				{\p -> \s -> Extends p }
-  final					{\p -> \s -> Final p }
-  finally				{\p -> \s -> Finally p }
-  float					{\p -> \s -> Float p }
-  for					{\p -> \s -> For p }
-  if					{\p -> \s -> If p }
-  implements				{\p -> \s -> Implements p }
-  import				{\p -> \s -> Import p }
-  instanceof				{\p -> \s -> InstanceOf p }
-  int 					{\p -> \s -> Int p }
-  interface				{\p -> \s -> Interface p }
-  long 					{\p -> \s -> Long p }
-  nativ 				{\p -> \s -> Nativ p }
-  new 					{\p -> \s -> New p }
-  package 				{\p -> \s -> Package p }
-  private 				{\p -> \s -> Private p }
-  protected 				{\p -> \s -> Protected p }
-  public 				{\p -> \s -> Public p }
-  return 				{\p -> \s -> Return p }
-  short 				{\p -> \s -> Short p }
-  static 				{\p -> \s -> Static p }
-  strictfp 				{\p -> \s -> StrictFp p }
-  super 				{\p -> \s -> Super p }
-  switch 				{\p -> \s -> Switch p }
-  synchronized 				{\p -> \s -> Synchronized p }
-  this 					{\p -> \s -> This p }
-  throw 				{\p -> \s -> Throw p }
-  throws 				{\p -> \s -> Throws p }
-  transient 				{\p -> \s -> Transient p }
-  try 					{\p -> \s -> Try p }
-  void 					{\p -> \s -> Void p }
-  volatile 				{\p -> \s -> Volatile p }
-  while 				{\p -> \s -> While p }
+  abstract				{\p -> \s -> AbstractToken p }
+  assert				{\p -> \s -> AssertToken p }
+  break					{\p -> \s -> BreakToken p }
+  byte					{\p -> \s -> ByteToken p }
+  boolean 				{\p -> \s -> BooleanToken p }
+  case					{\p -> \s -> CaseToken p }
+  catch					{\p -> \s -> CatchToken p }
+  char 					{\p -> \s -> CharToken p }
+  class					{\p -> \s -> ClassToken p }
+  continue				{\p -> \s -> ContinueToken p }
+  default				{\p -> \s -> DefaultToken p }
+  do					{\p -> \s -> DoToken p }
+  double				{\p -> \s -> DoubleToken p }
+  else					{\p -> \s -> ElseToken p }
+  enum					{\p -> \s -> EnumToken p }
+  extends				{\p -> \s -> ExtendsToken p }
+  final					{\p -> \s -> FinalToken p }
+  finally				{\p -> \s -> FinallyToken p }
+  float					{\p -> \s -> FloatToken p }
+  for					{\p -> \s -> ForToken p }
+  if					{\p -> \s -> IfToken p }
+  implements				{\p -> \s -> ImplementsToken p }
+  import				{\p -> \s -> ImportToken p }
+  instanceof				{\p -> \s -> InstanceOfToken p }
+  int 					{\p -> \s -> IntToken p }
+  interface				{\p -> \s -> InterfaceToken p }
+  long 					{\p -> \s -> LongToken p }
+  nativ 				{\p -> \s -> NativToken p }
+  new 					{\p -> \s -> NewToken p }
+  package 				{\p -> \s -> PackageToken p }
+  private 				{\p -> \s -> PrivateToken p }
+  protected 				{\p -> \s -> ProtectedToken p }
+  public 				{\p -> \s -> PublicToken p }
+  return 				{\p -> \s -> ReturnToken p }
+  short 				{\p -> \s -> ShortToken p }
+  static 				{\p -> \s -> StaticToken p }
+  strictfp 				{\p -> \s -> StrictFpToken p }
+  super 				{\p -> \s -> SuperToken p }
+  switch 				{\p -> \s -> SwitchToken p }
+  synchronized 				{\p -> \s -> SynchronizedToken p }
+  this 					{\p -> \s -> ThisToken p }
+  throw 				{\p -> \s -> ThrowToken p }
+  throws 				{\p -> \s -> ThrowsToken p }
+  transient 				{\p -> \s -> TransientToken p }
+  try 					{\p -> \s -> TryToken p }
+  void 					{\p -> \s -> VoidToken p }
+  volatile 				{\p -> \s -> VolatileToken p }
+  while 				{\p -> \s -> WhileToken p }
   
-  true					{\p -> \s -> BooleanLiteral True p}
-  false					{\p -> \s -> BooleanLiteral False p}
-  null					{\p -> \s -> NullLiteral p}
+  true					{\p -> \s -> BooleanLiteralToken True p}
+  false					{\p -> \s -> BooleanLiteralToken False p}
+  null					{\p -> \s -> NullLiteralToken p}
   
   
-  "+"					{\p -> \s -> Plus p }
-  "-"					{\p -> \s -> Minus p }
-  "*"					{\p -> \s -> Mul p }
-  "/"					{\p -> \s -> Divide p }
-  "%"					{\p -> \s -> Modulo p }
-  "&"					{\p -> \s -> BitAnd p }
-  "|"					{\p -> \s -> BitOr p }
-  "^"					{\p -> \s -> BitXor p }
-  "~"					{\p -> \s -> BitComplement p }
-  "<<"					{\p -> \s -> SignedLeftShift p }
-  ">>"					{\p -> \s -> SignedRightShift p }
-  ">>>"					{\p -> \s -> UnsignedRightShift p }
-  "!"					{\p -> \s -> Not p }
-  "++"					{\p -> \s -> PlusPlus p }
-  "--"					{\p -> \s -> MinusMinus p }
-  "="					{\p -> \s -> Assignment p }
-  "+="					{\p -> \s -> PlusAssignment p }
-  "-="					{\p -> \s -> MinusAssignment p }
-  "*="					{\p -> \s -> MulAssignment p }
-  "/="					{\p -> \s -> DivideAssignment p }
-  "%="					{\p -> \s -> ModuloAssignment p }
-  "<<="					{\p -> \s -> LShiftAssignment p }
-  ">>="					{\p -> \s -> RShiftAssignment p }
-  ">>>="				{\p -> \s -> UnsignedRShiftAssignment p }
-  "&="					{\p -> \s -> AndAssignment p }
-  "|="					{\p -> \s -> OrAssignment p }
-  "^="					{\p -> \s -> XorAssignment p }
-  "&&"					{\p -> \s -> ConditionalAnd p }
-  "||"					{\p -> \s -> ConditionalOr p }
-  "?"					{\p -> \s -> ConditionalQuestionmark p }
-  ":"					{\p -> \s -> ConditionalColon p }
-  "=="					{\p -> \s -> Equal p }
-  ">="					{\p -> \s -> LessEqual p }
-  ">"					{\p -> \s -> LessThan p }
-  "<"					{\p -> \s -> GreaterThan p }
-  "<="					{\p -> \s -> GreaterEqual p }
-  "!="					{\p -> \s -> NotEqual p }
-  "("					{\p -> \s -> LeftParenthesis p }
-  ")"					{\p -> \s -> RightParenthesis p }
-  "["					{\p -> \s -> LeftBracket p }
-  "]"					{\p -> \s -> RightBracket p }
-  "{"					{\p -> \s -> LeftBraces p }
-  "}"					{\p -> \s -> RightBraces p }
-  "."					{\p -> \s -> Dot p }
-  ";"					{\p -> \s -> Semicolon p }
+  "+"					{\p -> \s -> PlusToken p }
+  "-"					{\p -> \s -> MinusToken p }
+  "*"					{\p -> \s -> MulToken p }
+  "/"					{\p -> \s -> DivideToken p }
+  "%"					{\p -> \s -> ModuloToken p }
+  "&"					{\p -> \s -> BitAndToken p }
+  "|"					{\p -> \s -> BitOrToken p }
+  "^"					{\p -> \s -> BitXorToken p }
+  "~"					{\p -> \s -> BitComplementToken p }
+  "<<"					{\p -> \s -> SignedLeftShiftToken p }
+  ">>"					{\p -> \s -> SignedRightShiftToken p }
+  ">>>"					{\p -> \s -> UnsignedRightShiftToken p }
+  "!"					{\p -> \s -> NotToken p }
+  "++"					{\p -> \s -> PlusPlusToken p }
+  "--"					{\p -> \s -> MinusMinusToken p }
+  "="					{\p -> \s -> AssignmentToken p }
+  "+="					{\p -> \s -> PlusAssignmentToken p }
+  "-="					{\p -> \s -> MinusAssignmentToken p }
+  "*="					{\p -> \s -> MulAssignmentToken p }
+  "/="					{\p -> \s -> DivideAssignmentToken p }
+  "%="					{\p -> \s -> ModuloAssignmentToken p }
+  "<<="					{\p -> \s -> LShiftAssignmentToken p }
+  ">>="					{\p -> \s -> RShiftAssignmentToken p }
+  ">>>="				{\p -> \s -> UnsignedRShiftAssignmentToken p }
+  "&="					{\p -> \s -> AndAssignmentToken p }
+  "|="					{\p -> \s -> OrAssignmentToken p }
+  "^="					{\p -> \s -> XorAssignmentToken p }
+  "&&"					{\p -> \s -> ConditionalAndToken p }
+  "||"					{\p -> \s -> ConditionalOrToken p }
+  "?"					{\p -> \s -> ConditionalQuestionmarkToken p }
+  ":"					{\p -> \s -> ConditionalColonToken p }
+  "=="					{\p -> \s -> EqualToken p }
+  ">="					{\p -> \s -> LessEqualToken p }
+  ">"					{\p -> \s -> LessThanToken p }
+  "<"					{\p -> \s -> GreaterThanToken p }
+  "<="					{\p -> \s -> GreaterEqualToken p }
+  "!="					{\p -> \s -> NotEqualToken p }
+  "("					{\p -> \s -> LeftParenthesisToken p }
+  ")"					{\p -> \s -> RightParenthesisToken p }
+  "["					{\p -> \s -> LeftBracketToken p }
+  "]"					{\p -> \s -> RightBracketToken p }
+  "{"					{\p -> \s -> LeftBracesToken p }
+  "}"					{\p -> \s -> RightBracesToken p }
+  "."					{\p -> \s -> DotToken p }
+  ";"					{\p -> \s -> SemicolonToken p }
   
-  [$char \_] [$char $digit \_]*				{\p -> \s -> Identifier s p }
-  \" [^\"\n]* \"					{\p -> \s -> StringLiteral s p }
-  \' [^\'\n] \'						{\p -> \s -> CharLiteral s p }
-  \' \\[^\'\n] \'					{\p -> \s -> CharLiteral s p }
+  [$char \_] [$char $digit \_]*				{\p -> \s -> IdentifierToken s p }
+  \" [^\"\n]* \"					{\p -> \s -> StringLiteralToken s p }
+  \' [^\'\n] \'						{\p -> \s -> CharLiteralToken s p }
+  \' \\[^\'\n] \'					{\p -> \s -> CharLiteralToken s p }
   
   -- Java Operators
   
   $white+				;
   [0-9] ([^$white])+			{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is not a lexem! Identifiers can't start with digits.")
-						      Error}
+						      ErrorToken}
   .					{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is a forbidden character.")
-						      Error}
+						      ErrorToken}
   
   
 
@@ -131,107 +131,107 @@ getLineFromPosn (AlexPn _ l _) = l
 
 
 data Token = 
-    Abstract AlexPosn			|
-    Assert AlexPosn			|
-    Boolean AlexPosn			|
-    Break AlexPosn			|
-    Byte AlexPosn			|
-    Case AlexPosn			|
-    Catch AlexPosn			|
-    Char AlexPosn			|
-    Class AlexPosn			|
-    Continue AlexPosn			|
-    Default AlexPosn			|
-    Do AlexPosn				|
-    Double AlexPosn			|
-    Else AlexPosn			|
-    Enum AlexPosn			|
-    Extends AlexPosn			|
-    Final AlexPosn			|
-    Finally AlexPosn			|
-    Float AlexPosn			|
-    For AlexPosn 			|
-    If AlexPosn				|
-    Implements AlexPosn			|
-    Import AlexPosn			|
-    InstanceOf AlexPosn			|
-    Int AlexPosn 			|
-    Interface AlexPosn			|
-    Long AlexPosn			|
-    Nativ AlexPosn			|
-    New AlexPosn			|
-    Package AlexPosn			|
-    Private AlexPosn			|
-    Protected AlexPosn			|
-    Public AlexPosn			|
-    Return AlexPosn			|
-    Short AlexPosn			|
-    Static AlexPosn			|
-    StrictFp AlexPosn			|
-    Super AlexPosn			|
-    Switch AlexPosn			|
-    Synchronized AlexPosn		|
-    This AlexPosn			|
-    Throw AlexPosn			|
-    Throws AlexPosn			|
-    Transient AlexPosn			|
-    Try AlexPosn			|
-    Void AlexPosn			|
-    Volatile AlexPosn			|
-    While AlexPosn			|
-    Semicolon AlexPosn			|
-    Plus AlexPosn			|
-    Minus AlexPosn			|
-    Mul AlexPosn			|
-    Divide AlexPosn			|
-    Modulo AlexPosn			|
-    PlusPlus AlexPosn			|
-    MinusMinus AlexPosn			|
-    Not AlexPosn			|
-    Assignment AlexPosn			|
-    PlusAssignment AlexPosn		|
-    MinusAssignment AlexPosn		|
-    MulAssignment AlexPosn		|
-    DivideAssignment AlexPosn		|
-    ModuloAssignment AlexPosn		|
-    AndAssignment AlexPosn		|
-    OrAssignment AlexPosn		|
-    XorAssignment AlexPosn		|
-    LShiftAssignment AlexPosn		|
-    RShiftAssignment AlexPosn		|
-    UnsignedRShiftAssignment AlexPosn	|
-    Equal AlexPosn			|
-    NotEqual AlexPosn			|
-    GreaterEqual AlexPosn		|
-    GreaterThan AlexPosn		|
-    LessThan AlexPosn			|
-    LessEqual AlexPosn			|
-    ConditionalAnd AlexPosn		|
-    ConditionalOr AlexPosn		|
-    ConditionalQuestionmark AlexPosn 	|
-    ConditionalColon AlexPosn 		|
-    BitComplement AlexPosn		|
-    BitAnd AlexPosn			|
-    BitOr AlexPosn			|
-    BitXor AlexPosn			|
-    SignedLeftShift AlexPosn		|
-    SignedRightShift AlexPosn		|
-    UnsignedRightShift AlexPosn		|
-    Dot AlexPosn			|
-    LeftBracket AlexPosn		|
-    RightBracket AlexPosn		|
-    LeftParenthesis AlexPosn		|
-    RightParenthesis AlexPosn		|
-    LeftBraces AlexPosn			|
-    RightBraces AlexPosn		|
-    CharLiteral String AlexPosn		|
-    StringLiteral String AlexPosn	|
-    IntLiteral Int AlexPosn		|
-    FloatLiteral AlexPosn		|
-    BooleanLiteral Bool AlexPosn	|
-    NullLiteral AlexPosn		|
-    Identifier String AlexPosn		|
-    Error
+    AbstractToken AlexPosn			|
+    AssertToken AlexPosn			|
+    BooleanToken AlexPosn			|
+    BreakToken AlexPosn				|
+    ByteToken AlexPosn				|
+    CaseToken AlexPosn				|
+    CatchToken AlexPosn				|
+    CharToken AlexPosn				|
+    ClassToken AlexPosn				|
+    ContinueToken AlexPosn			|
+    DefaultToken AlexPosn			|
+    DoToken AlexPosn				|
+    DoubleToken AlexPosn			|
+    ElseToken AlexPosn				|
+    EnumToken AlexPosn				|
+    ExtendsToken AlexPosn			|
+    FinalToken AlexPosn				|
+    FinallyToken AlexPosn			|
+    FloatToken AlexPosn				|
+    ForToken AlexPosn 				|
+    IfToken AlexPosn				|
+    ImplementsToken AlexPosn			|
+    ImportToken AlexPosn			|
+    InstanceOfToken AlexPosn			|
+    IntToken AlexPosn 				|
+    InterfaceToken AlexPosn			|
+    LongToken AlexPosn				|
+    NativToken AlexPosn				|
+    NewToken AlexPosn				|
+    PackageToken AlexPosn			|
+    PrivateToken AlexPosn			|
+    ProtectedToken AlexPosn			|
+    PublicToken AlexPosn			|
+    ReturnToken AlexPosn			|
+    ShortToken AlexPosn				|
+    StaticToken AlexPosn			|
+    StrictFpToken AlexPosn			|
+    SuperToken AlexPosn				|
+    SwitchToken AlexPosn			|
+    SynchronizedToken AlexPosn			|
+    ThisToken AlexPosn				|
+    ThrowToken AlexPosn				|
+    ThrowsToken AlexPosn			|
+    TransientToken AlexPosn			|
+    TryToken AlexPosn				|
+    VoidToken AlexPosn				|
+    VolatileToken AlexPosn			|
+    WhileToken AlexPosn				|
+    SemicolonToken AlexPosn			|
+    PlusToken AlexPosn				|
+    MinusToken AlexPosn				|
+    MulToken AlexPosn				|
+    DivideToken AlexPosn			|
+    ModuloToken AlexPosn			|
+    PlusPlusToken AlexPosn			|
+    MinusMinusToken AlexPosn			|
+    NotToken AlexPosn				|
+    AssignmentToken AlexPosn			|
+    PlusAssignmentToken AlexPosn		|
+    MinusAssignmentToken AlexPosn		|
+    MulAssignmentToken AlexPosn			|
+    DivideAssignmentToken AlexPosn		|
+    ModuloAssignmentToken AlexPosn		|
+    AndAssignmentToken AlexPosn			|
+    OrAssignmentToken AlexPosn			|
+    XorAssignmentToken AlexPosn			|
+    LShiftAssignmentToken AlexPosn		|
+    RShiftAssignmentToken AlexPosn		|
+    UnsignedRShiftAssignmentToken AlexPosn	|
+    EqualToken AlexPosn				|
+    NotEqualToken AlexPosn			|
+    GreaterEqualToken AlexPosn			|
+    GreaterThanToken AlexPosn			|
+    LessThanToken AlexPosn			|
+    LessEqualToken AlexPosn			|
+    ConditionalAndToken AlexPosn		|
+    ConditionalOrToken AlexPosn			|
+    ConditionalQuestionmarkToken AlexPosn 	|
+    ConditionalColonToken AlexPosn 		|
+    BitComplementToken AlexPosn			|
+    BitAndToken AlexPosn			|
+    BitOrToken AlexPosn				|
+    BitXorToken AlexPosn			|
+    SignedLeftShiftToken AlexPosn		|
+    SignedRightShiftToken AlexPosn		|
+    UnsignedRightShiftToken AlexPosn		|
+    DotToken AlexPosn				|
+    LeftBracketToken AlexPosn			|
+    RightBracketToken AlexPosn			|
+    LeftParenthesisToken AlexPosn		|
+    RightParenthesisToken AlexPosn		|
+    LeftBracesToken AlexPosn			|
+    RightBracesToken AlexPosn			|
+    CharLiteralToken String AlexPosn		|
+    StringLiteralToken String AlexPosn		|
+    IntLiteralToken Int AlexPosn		|
+    FloatLiteralToken AlexPosn			|
+    BooleanLiteralToken Bool AlexPosn		|
+    NullLiteralToken AlexPosn			|
+    IdentifierToken String AlexPosn		|
+    ErrorToken
     deriving (Eq, Show)
 
 

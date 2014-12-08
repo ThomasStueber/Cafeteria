@@ -1,11 +1,11 @@
-module Main  where
+module Abs where
 import Data.Tree
 import Data.Maybe
 
 type Typename = String
 
 
-data ClassDef = ClassDef(Typename, [MemberFunction], [MemberField], [Constructor]) deriving Show
+data ClassDef = ClassDef(Typename, [Modifier], [MemberFunction], [MemberField], [Constructor]) deriving Show
 
 data MemberFunction = MemberFunction(Typename, String, [(Typename, String)], [Modifier], Statement) deriving Show
 
@@ -84,7 +84,7 @@ makeNodesExp [] = []
 makeNodesExp (x:xs) = [expToTree(x)] ++ makeNodesExp(xs)
 
 classDefToTree ::  ClassDef -> (Tree String)
-classDefToTree (ClassDef(t, fl, vl, cl)) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl)]
+classDefToTree (ClassDef(t, modifiers, fl, vl, cl)) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node ("Modifiers: " ++ (show modifiers)) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl)]
 
 memberFunctionToTree ::  MemberFunction -> (Tree String)
 memberFunctionToTree (MemberFunction(t, name, parameter, modifier, statement)) = Node "MemberFunction" [Node ("Name: " ++ name) [], Node ("Rückgabedatentyp" ++ t) [], Node ("Modifier: " ++ (show modifier)) []]
@@ -118,5 +118,5 @@ expToTree e@_ = Node (show e) []
 drawAst :: ClassDef -> String
 drawAst c = drawTree (classDefToTree(c))
 
-main = putStrLn (drawAst(ClassDef("TestClass", [MemberFunction("int", "testfun1",[],[Public, Static],Block []), MemberFunction("boolean", "testfun2", [], [], Block [])], [], [])))
+-- main = putStrLn (drawAst(ClassDef("TestClass", [MemberFunction("int", "testfun1",[],[Public, Static],Block []), MemberFunction("boolean", "testfun2", [], [], Block [])], [], [])))
 
