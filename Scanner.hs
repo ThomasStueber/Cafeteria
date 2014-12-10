@@ -182,107 +182,107 @@ getLineFromPosn (AlexPn _ l _) = l
 
 
 data Token = 
-    Abstract AlexPosn			|
-    Assert AlexPosn			|
-    Boolean AlexPosn			|
-    Break AlexPosn			|
-    Byte AlexPosn			|
-    Case AlexPosn			|
-    Catch AlexPosn			|
-    Char AlexPosn			|
-    Class AlexPosn			|
-    Continue AlexPosn			|
-    Default AlexPosn			|
-    Do AlexPosn				|
-    Double AlexPosn			|
-    Else AlexPosn			|
-    Enum AlexPosn			|
-    Extends AlexPosn			|
-    Final AlexPosn			|
-    Finally AlexPosn			|
-    Float AlexPosn			|
-    For AlexPosn 			|
-    If AlexPosn				|
-    Implements AlexPosn			|
-    Import AlexPosn			|
-    InstanceOf AlexPosn			|
-    Int AlexPosn 			|
-    Interface AlexPosn			|
-    Long AlexPosn			|
-    Nativ AlexPosn			|
-    New AlexPosn			|
-    Package AlexPosn			|
-    Private AlexPosn			|
-    Protected AlexPosn			|
-    Public AlexPosn			|
-    Return AlexPosn			|
-    Short AlexPosn			|
-    Static AlexPosn			|
-    StrictFp AlexPosn			|
-    Super AlexPosn			|
-    Switch AlexPosn			|
-    Synchronized AlexPosn		|
-    This AlexPosn			|
-    Throw AlexPosn			|
-    Throws AlexPosn			|
-    Transient AlexPosn			|
-    Try AlexPosn			|
-    Void AlexPosn			|
-    Volatile AlexPosn			|
-    While AlexPosn			|
-    Semicolon AlexPosn			|
-    Plus AlexPosn			|
-    Minus AlexPosn			|
-    Mul AlexPosn			|
-    Divide AlexPosn			|
-    Modulo AlexPosn			|
-    PlusPlus AlexPosn			|
-    MinusMinus AlexPosn			|
-    Not AlexPosn			|
-    Assignment AlexPosn			|
-    PlusAssignment AlexPosn		|
-    MinusAssignment AlexPosn		|
-    MulAssignment AlexPosn		|
-    DivideAssignment AlexPosn		|
-    ModuloAssignment AlexPosn		|
-    AndAssignment AlexPosn		|
-    OrAssignment AlexPosn		|
-    XorAssignment AlexPosn		|
-    LShiftAssignment AlexPosn		|
-    RShiftAssignment AlexPosn		|
-    UnsignedRShiftAssignment AlexPosn	|
-    Equal AlexPosn			|
-    NotEqual AlexPosn			|
-    GreaterEqual AlexPosn		|
-    GreaterThan AlexPosn		|
-    LessThan AlexPosn			|
-    LessEqual AlexPosn			|
-    ConditionalAnd AlexPosn		|
-    ConditionalOr AlexPosn		|
-    ConditionalQuestionmark AlexPosn 	|
-    ConditionalColon AlexPosn 		|
-    BitComplement AlexPosn		|
-    BitAnd AlexPosn			|
-    BitOr AlexPosn			|
-    BitXor AlexPosn			|
-    SignedLeftShift AlexPosn		|
-    SignedRightShift AlexPosn		|
-    UnsignedRightShift AlexPosn		|
-    Dot AlexPosn			|
-    LeftBracket AlexPosn		|
-    RightBracket AlexPosn		|
-    LeftParenthesis AlexPosn		|
-    RightParenthesis AlexPosn		|
-    LeftBraces AlexPosn			|
-    RightBraces AlexPosn		|
-    CharLiteral String AlexPosn		|
-    StringLiteral String AlexPosn	|
-    IntLiteral Int AlexPosn		|
-    FloatLiteral AlexPosn		|
-    BooleanLiteral Bool AlexPosn	|
-    NullLiteral AlexPosn		|
-    Identifier String AlexPosn		|
-    Error
+    AbstractToken AlexPosn			|
+    AssertToken AlexPosn			|
+    BooleanToken AlexPosn			|
+    BreakToken AlexPosn				|
+    ByteToken AlexPosn				|
+    CaseToken AlexPosn				|
+    CatchToken AlexPosn				|
+    CharToken AlexPosn				|
+    ClassToken AlexPosn				|
+    ContinueToken AlexPosn			|
+    DefaultToken AlexPosn			|
+    DoToken AlexPosn				|
+    DoubleToken AlexPosn			|
+    ElseToken AlexPosn				|
+    EnumToken AlexPosn				|
+    ExtendsToken AlexPosn			|
+    FinalToken AlexPosn				|
+    FinallyToken AlexPosn			|
+    FloatToken AlexPosn				|
+    ForToken AlexPosn 				|
+    IfToken AlexPosn				|
+    ImplementsToken AlexPosn			|
+    ImportToken AlexPosn			|
+    InstanceOfToken AlexPosn			|
+    IntToken AlexPosn 				|
+    InterfaceToken AlexPosn			|
+    LongToken AlexPosn				|
+    NativToken AlexPosn				|
+    NewToken AlexPosn				|
+    PackageToken AlexPosn			|
+    PrivateToken AlexPosn			|
+    ProtectedToken AlexPosn			|
+    PublicToken AlexPosn			|
+    ReturnToken AlexPosn			|
+    ShortToken AlexPosn				|
+    StaticToken AlexPosn			|
+    StrictFpToken AlexPosn			|
+    SuperToken AlexPosn				|
+    SwitchToken AlexPosn			|
+    SynchronizedToken AlexPosn			|
+    ThisToken AlexPosn				|
+    ThrowToken AlexPosn				|
+    ThrowsToken AlexPosn			|
+    TransientToken AlexPosn			|
+    TryToken AlexPosn				|
+    VoidToken AlexPosn				|
+    VolatileToken AlexPosn			|
+    WhileToken AlexPosn				|
+    SemicolonToken AlexPosn			|
+    PlusToken AlexPosn				|
+    MinusToken AlexPosn				|
+    MulToken AlexPosn				|
+    DivideToken AlexPosn			|
+    ModuloToken AlexPosn			|
+    PlusPlusToken AlexPosn			|
+    MinusMinusToken AlexPosn			|
+    NotToken AlexPosn				|
+    AssignmentToken AlexPosn			|
+    PlusAssignmentToken AlexPosn		|
+    MinusAssignmentToken AlexPosn		|
+    MulAssignmentToken AlexPosn			|
+    DivideAssignmentToken AlexPosn		|
+    ModuloAssignmentToken AlexPosn		|
+    AndAssignmentToken AlexPosn			|
+    OrAssignmentToken AlexPosn			|
+    XorAssignmentToken AlexPosn			|
+    LShiftAssignmentToken AlexPosn		|
+    RShiftAssignmentToken AlexPosn		|
+    UnsignedRShiftAssignmentToken AlexPosn	|
+    EqualToken AlexPosn				|
+    NotEqualToken AlexPosn			|
+    GreaterEqualToken AlexPosn			|
+    GreaterThanToken AlexPosn			|
+    LessThanToken AlexPosn			|
+    LessEqualToken AlexPosn			|
+    ConditionalAndToken AlexPosn		|
+    ConditionalOrToken AlexPosn			|
+    ConditionalQuestionmarkToken AlexPosn 	|
+    ConditionalColonToken AlexPosn 		|
+    BitComplementToken AlexPosn			|
+    BitAndToken AlexPosn			|
+    BitOrToken AlexPosn				|
+    BitXorToken AlexPosn			|
+    SignedLeftShiftToken AlexPosn		|
+    SignedRightShiftToken AlexPosn		|
+    UnsignedRightShiftToken AlexPosn		|
+    DotToken AlexPosn				|
+    LeftBracketToken AlexPosn			|
+    RightBracketToken AlexPosn			|
+    LeftParenthesisToken AlexPosn		|
+    RightParenthesisToken AlexPosn		|
+    LeftBracesToken AlexPosn			|
+    RightBracesToken AlexPosn			|
+    CharLiteralToken String AlexPosn		|
+    StringLiteralToken String AlexPosn		|
+    IntLiteralToken Int AlexPosn		|
+    FloatLiteralToken AlexPosn			|
+    BooleanLiteralToken Bool AlexPosn		|
+    NullLiteralToken AlexPosn			|
+    IdentifierToken String AlexPosn		|
+    ErrorToken
     deriving (Eq, Show)
 
 
@@ -290,110 +290,110 @@ data Token =
 main = do
     print (alexScanTokens "\'c\' true false")
 
-alex_action_0 = \p -> \s -> Abstract p 
-alex_action_1 = \p -> \s -> Assert p 
-alex_action_2 = \p -> \s -> Break p 
-alex_action_3 = \p -> \s -> Byte p 
-alex_action_4 = \p -> \s -> Boolean p 
-alex_action_5 = \p -> \s -> Case p 
-alex_action_6 = \p -> \s -> Catch p 
-alex_action_7 = \p -> \s -> Char p 
-alex_action_8 = \p -> \s -> Class p 
-alex_action_9 = \p -> \s -> Continue p 
-alex_action_10 = \p -> \s -> Default p 
-alex_action_11 = \p -> \s -> Do p 
-alex_action_12 = \p -> \s -> Double p 
-alex_action_13 = \p -> \s -> Else p 
-alex_action_14 = \p -> \s -> Enum p 
-alex_action_15 = \p -> \s -> Extends p 
-alex_action_16 = \p -> \s -> Final p 
-alex_action_17 = \p -> \s -> Finally p 
-alex_action_18 = \p -> \s -> Float p 
-alex_action_19 = \p -> \s -> For p 
-alex_action_20 = \p -> \s -> If p 
-alex_action_21 = \p -> \s -> Implements p 
-alex_action_22 = \p -> \s -> Import p 
-alex_action_23 = \p -> \s -> InstanceOf p 
-alex_action_24 = \p -> \s -> Int p 
-alex_action_25 = \p -> \s -> Interface p 
-alex_action_26 = \p -> \s -> Long p 
-alex_action_27 = \p -> \s -> Nativ p 
-alex_action_28 = \p -> \s -> New p 
-alex_action_29 = \p -> \s -> Package p 
-alex_action_30 = \p -> \s -> Private p 
-alex_action_31 = \p -> \s -> Protected p 
-alex_action_32 = \p -> \s -> Public p 
-alex_action_33 = \p -> \s -> Return p 
-alex_action_34 = \p -> \s -> Short p 
-alex_action_35 = \p -> \s -> Static p 
-alex_action_36 = \p -> \s -> StrictFp p 
-alex_action_37 = \p -> \s -> Super p 
-alex_action_38 = \p -> \s -> Switch p 
-alex_action_39 = \p -> \s -> Synchronized p 
-alex_action_40 = \p -> \s -> This p 
-alex_action_41 = \p -> \s -> Throw p 
-alex_action_42 = \p -> \s -> Throws p 
-alex_action_43 = \p -> \s -> Transient p 
-alex_action_44 = \p -> \s -> Try p 
-alex_action_45 = \p -> \s -> Void p 
-alex_action_46 = \p -> \s -> Volatile p 
-alex_action_47 = \p -> \s -> While p 
-alex_action_48 = \p -> \s -> BooleanLiteral True p
-alex_action_49 = \p -> \s -> BooleanLiteral False p
-alex_action_50 = \p -> \s -> NullLiteral p
-alex_action_51 = \p -> \s -> Plus p 
-alex_action_52 = \p -> \s -> Minus p 
-alex_action_53 = \p -> \s -> Mul p 
-alex_action_54 = \p -> \s -> Divide p 
-alex_action_55 = \p -> \s -> Modulo p 
-alex_action_56 = \p -> \s -> BitAnd p 
-alex_action_57 = \p -> \s -> BitOr p 
-alex_action_58 = \p -> \s -> BitXor p 
-alex_action_59 = \p -> \s -> BitComplement p 
-alex_action_60 = \p -> \s -> SignedLeftShift p 
-alex_action_61 = \p -> \s -> SignedRightShift p 
-alex_action_62 = \p -> \s -> UnsignedRightShift p 
-alex_action_63 = \p -> \s -> Not p 
-alex_action_64 = \p -> \s -> PlusPlus p 
-alex_action_65 = \p -> \s -> MinusMinus p 
-alex_action_66 = \p -> \s -> Assignment p 
-alex_action_67 = \p -> \s -> PlusAssignment p 
-alex_action_68 = \p -> \s -> MinusAssignment p 
-alex_action_69 = \p -> \s -> MulAssignment p 
-alex_action_70 = \p -> \s -> DivideAssignment p 
-alex_action_71 = \p -> \s -> ModuloAssignment p 
-alex_action_72 = \p -> \s -> LShiftAssignment p 
-alex_action_73 = \p -> \s -> RShiftAssignment p 
-alex_action_74 = \p -> \s -> UnsignedRShiftAssignment p 
-alex_action_75 = \p -> \s -> AndAssignment p 
-alex_action_76 = \p -> \s -> OrAssignment p 
-alex_action_77 = \p -> \s -> XorAssignment p 
-alex_action_78 = \p -> \s -> ConditionalAnd p 
-alex_action_79 = \p -> \s -> ConditionalOr p 
-alex_action_80 = \p -> \s -> ConditionalQuestionmark p 
-alex_action_81 = \p -> \s -> ConditionalColon p 
-alex_action_82 = \p -> \s -> Equal p 
-alex_action_83 = \p -> \s -> LessEqual p 
-alex_action_84 = \p -> \s -> LessThan p 
-alex_action_85 = \p -> \s -> GreaterThan p 
-alex_action_86 = \p -> \s -> GreaterEqual p 
-alex_action_87 = \p -> \s -> NotEqual p 
-alex_action_88 = \p -> \s -> LeftParenthesis p 
-alex_action_89 = \p -> \s -> RightParenthesis p 
-alex_action_90 = \p -> \s -> LeftBracket p 
-alex_action_91 = \p -> \s -> RightBracket p 
-alex_action_92 = \p -> \s -> LeftBraces p 
-alex_action_93 = \p -> \s -> RightBraces p 
-alex_action_94 = \p -> \s -> Dot p 
-alex_action_95 = \p -> \s -> Semicolon p 
-alex_action_96 = \p -> \s -> Identifier s p 
-alex_action_97 = \p -> \s -> StringLiteral s p 
-alex_action_98 = \p -> \s -> CharLiteral s p 
-alex_action_99 = \p -> \s -> CharLiteral s p 
+alex_action_0 = \p -> \s -> AbstractToken p 
+alex_action_1 = \p -> \s -> AssertToken p 
+alex_action_2 = \p -> \s -> BreakToken p 
+alex_action_3 = \p -> \s -> ByteToken p 
+alex_action_4 = \p -> \s -> BooleanToken p 
+alex_action_5 = \p -> \s -> CaseToken p 
+alex_action_6 = \p -> \s -> CatchToken p 
+alex_action_7 = \p -> \s -> CharToken p 
+alex_action_8 = \p -> \s -> ClassToken p 
+alex_action_9 = \p -> \s -> ContinueToken p 
+alex_action_10 = \p -> \s -> DefaultToken p 
+alex_action_11 = \p -> \s -> DoToken p 
+alex_action_12 = \p -> \s -> DoubleToken p 
+alex_action_13 = \p -> \s -> ElseToken p 
+alex_action_14 = \p -> \s -> EnumToken p 
+alex_action_15 = \p -> \s -> ExtendsToken p 
+alex_action_16 = \p -> \s -> FinalToken p 
+alex_action_17 = \p -> \s -> FinallyToken p 
+alex_action_18 = \p -> \s -> FloatToken p 
+alex_action_19 = \p -> \s -> ForToken p 
+alex_action_20 = \p -> \s -> IfToken p 
+alex_action_21 = \p -> \s -> ImplementsToken p 
+alex_action_22 = \p -> \s -> ImportToken p 
+alex_action_23 = \p -> \s -> InstanceOfToken p 
+alex_action_24 = \p -> \s -> IntToken p 
+alex_action_25 = \p -> \s -> InterfaceToken p 
+alex_action_26 = \p -> \s -> LongToken p 
+alex_action_27 = \p -> \s -> NativToken p 
+alex_action_28 = \p -> \s -> NewToken p 
+alex_action_29 = \p -> \s -> PackageToken p 
+alex_action_30 = \p -> \s -> PrivateToken p 
+alex_action_31 = \p -> \s -> ProtectedToken p 
+alex_action_32 = \p -> \s -> PublicToken p 
+alex_action_33 = \p -> \s -> ReturnToken p 
+alex_action_34 = \p -> \s -> ShortToken p 
+alex_action_35 = \p -> \s -> StaticToken p 
+alex_action_36 = \p -> \s -> StrictFpToken p 
+alex_action_37 = \p -> \s -> SuperToken p 
+alex_action_38 = \p -> \s -> SwitchToken p 
+alex_action_39 = \p -> \s -> SynchronizedToken p 
+alex_action_40 = \p -> \s -> ThisToken p 
+alex_action_41 = \p -> \s -> ThrowToken p 
+alex_action_42 = \p -> \s -> ThrowsToken p 
+alex_action_43 = \p -> \s -> TransientToken p 
+alex_action_44 = \p -> \s -> TryToken p 
+alex_action_45 = \p -> \s -> VoidToken p 
+alex_action_46 = \p -> \s -> VolatileToken p 
+alex_action_47 = \p -> \s -> WhileToken p 
+alex_action_48 = \p -> \s -> BooleanLiteralToken True p
+alex_action_49 = \p -> \s -> BooleanLiteralToken False p
+alex_action_50 = \p -> \s -> NullLiteralToken p
+alex_action_51 = \p -> \s -> PlusToken p 
+alex_action_52 = \p -> \s -> MinusToken p 
+alex_action_53 = \p -> \s -> MulToken p 
+alex_action_54 = \p -> \s -> DivideToken p 
+alex_action_55 = \p -> \s -> ModuloToken p 
+alex_action_56 = \p -> \s -> BitAndToken p 
+alex_action_57 = \p -> \s -> BitOrToken p 
+alex_action_58 = \p -> \s -> BitXorToken p 
+alex_action_59 = \p -> \s -> BitComplementToken p 
+alex_action_60 = \p -> \s -> SignedLeftShiftToken p 
+alex_action_61 = \p -> \s -> SignedRightShiftToken p 
+alex_action_62 = \p -> \s -> UnsignedRightShiftToken p 
+alex_action_63 = \p -> \s -> NotToken p 
+alex_action_64 = \p -> \s -> PlusPlusToken p 
+alex_action_65 = \p -> \s -> MinusMinusToken p 
+alex_action_66 = \p -> \s -> AssignmentToken p 
+alex_action_67 = \p -> \s -> PlusAssignmentToken p 
+alex_action_68 = \p -> \s -> MinusAssignmentToken p 
+alex_action_69 = \p -> \s -> MulAssignmentToken p 
+alex_action_70 = \p -> \s -> DivideAssignmentToken p 
+alex_action_71 = \p -> \s -> ModuloAssignmentToken p 
+alex_action_72 = \p -> \s -> LShiftAssignmentToken p 
+alex_action_73 = \p -> \s -> RShiftAssignmentToken p 
+alex_action_74 = \p -> \s -> UnsignedRShiftAssignmentToken p 
+alex_action_75 = \p -> \s -> AndAssignmentToken p 
+alex_action_76 = \p -> \s -> OrAssignmentToken p 
+alex_action_77 = \p -> \s -> XorAssignmentToken p 
+alex_action_78 = \p -> \s -> ConditionalAndToken p 
+alex_action_79 = \p -> \s -> ConditionalOrToken p 
+alex_action_80 = \p -> \s -> ConditionalQuestionmarkToken p 
+alex_action_81 = \p -> \s -> ConditionalColonToken p 
+alex_action_82 = \p -> \s -> EqualToken p 
+alex_action_83 = \p -> \s -> LessEqualToken p 
+alex_action_84 = \p -> \s -> LessThanToken p 
+alex_action_85 = \p -> \s -> GreaterThanToken p 
+alex_action_86 = \p -> \s -> GreaterEqualToken p 
+alex_action_87 = \p -> \s -> NotEqualToken p 
+alex_action_88 = \p -> \s -> LeftParenthesisToken p 
+alex_action_89 = \p -> \s -> RightParenthesisToken p 
+alex_action_90 = \p -> \s -> LeftBracketToken p 
+alex_action_91 = \p -> \s -> RightBracketToken p 
+alex_action_92 = \p -> \s -> LeftBracesToken p 
+alex_action_93 = \p -> \s -> RightBracesToken p 
+alex_action_94 = \p -> \s -> DotToken p 
+alex_action_95 = \p -> \s -> SemicolonToken p 
+alex_action_96 = \p -> \s -> IdentifierToken s p 
+alex_action_97 = \p -> \s -> StringLiteralToken s p 
+alex_action_98 = \p -> \s -> CharLiteralToken s p 
+alex_action_99 = \p -> \s -> CharLiteralToken s p 
 alex_action_101 = \p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is not a lexem! Identifiers can't start with digits.")
-						      Error
+						      ErrorToken
 alex_action_102 = \p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is a forbidden character.")
-						      Error
+						      ErrorToken
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}

@@ -2,59 +2,291 @@
 module Main (main, parseJava) where
 import Scanner
 import Abs
+import Data.Maybe
 
 -- parser produced by Happy Version 1.18.9
 
-data HappyAbsSyn t4
+data HappyAbsSyn t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15
 	= HappyTerminal (Token)
 	| HappyErrorToken Int
 	| HappyAbsSyn4 t4
+	| HappyAbsSyn5 t5
+	| HappyAbsSyn6 t6
+	| HappyAbsSyn7 t7
+	| HappyAbsSyn8 t8
+	| HappyAbsSyn9 t9
+	| HappyAbsSyn10 t10
+	| HappyAbsSyn11 t11
+	| HappyAbsSyn12 t12
+	| HappyAbsSyn13 t13
+	| HappyAbsSyn14 t14
+	| HappyAbsSyn15 t15
 
-action_0 (5) = happyShift action_2
+action_0 (16) = happyShift action_2
+action_0 (20) = happyShift action_6
+action_0 (21) = happyShift action_7
+action_0 (22) = happyShift action_8
+action_0 (23) = happyShift action_9
 action_0 (4) = happyGoto action_3
+action_0 (5) = happyGoto action_4
+action_0 (6) = happyGoto action_5
 action_0 _ = happyFail
 
-action_1 (5) = happyShift action_2
+action_1 (16) = happyShift action_2
 action_1 _ = happyFail
 
-action_2 (8) = happyShift action_4
+action_2 (19) = happyShift action_12
 action_2 _ = happyFail
 
-action_3 (9) = happyAccept
+action_3 (28) = happyAccept
 action_3 _ = happyFail
 
-action_4 (6) = happyShift action_5
+action_4 (16) = happyShift action_11
+action_4 (20) = happyShift action_6
+action_4 (21) = happyShift action_7
+action_4 (22) = happyShift action_8
+action_4 (23) = happyShift action_9
+action_4 (6) = happyGoto action_10
 action_4 _ = happyFail
 
-action_5 (7) = happyShift action_6
-action_5 _ = happyFail
+action_5 _ = happyReduce_4
 
-action_6 _ = happyReduce_1
+action_6 _ = happyReduce_5
 
-happyReduce_1 = happyReduce 4 4 happyReduction_1
-happyReduction_1 (_ `HappyStk`
+action_7 _ = happyReduce_6
+
+action_8 _ = happyReduce_7
+
+action_9 _ = happyReduce_8
+
+action_10 _ = happyReduce_3
+
+action_11 (19) = happyShift action_15
+action_11 _ = happyFail
+
+action_12 (17) = happyShift action_14
+action_12 (7) = happyGoto action_13
+action_12 _ = happyFail
+
+action_13 _ = happyReduce_1
+
+action_14 (18) = happyShift action_19
+action_14 (23) = happyShift action_20
+action_14 (8) = happyGoto action_17
+action_14 (9) = happyGoto action_18
+action_14 _ = happyFail
+
+action_15 (17) = happyShift action_14
+action_15 (7) = happyGoto action_16
+action_15 _ = happyFail
+
+action_16 _ = happyReduce_2
+
+action_17 (18) = happyShift action_22
+action_17 (23) = happyShift action_20
+action_17 (9) = happyGoto action_21
+action_17 _ = happyFail
+
+action_18 _ = happyReduce_12
+
+action_19 _ = happyReduce_10
+
+action_20 _ = happyReduce_13
+
+action_21 _ = happyReduce_11
+
+action_22 _ = happyReduce_9
+
+happyReduce_1 = happySpecReduce_3  4 happyReduction_1
+happyReduction_1 _
+	(HappyTerminal (IdentifierToken happy_var_2 _))
+	_
+	 =  HappyAbsSyn4
+		 (ClassDef(happy_var_2, [], [], [], [])
+	)
+happyReduction_1 _ _ _  = notHappyAtAll 
+
+happyReduce_2 = happyReduce 4 4 happyReduction_2
+happyReduction_2 ((HappyAbsSyn7  happy_var_4) `HappyStk`
+	(HappyTerminal (IdentifierToken happy_var_3 _)) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (Identifier happy_var_2 _)) `HappyStk`
-	_ `HappyStk`
+	(HappyAbsSyn5  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (ClassDef(happy_var_2, [], [], [])
+		 (ClassDef(happy_var_3, happy_var_1, fst happy_var_4, [], [])
 	) `HappyStk` happyRest
 
+happyReduce_3 = happySpecReduce_2  5 happyReduction_3
+happyReduction_3 (HappyAbsSyn6  happy_var_2)
+	(HappyAbsSyn5  happy_var_1)
+	 =  HappyAbsSyn5
+		 (happy_var_1 ++ [happy_var_2]
+	)
+happyReduction_3 _ _  = notHappyAtAll 
+
+happyReduce_4 = happySpecReduce_1  5 happyReduction_4
+happyReduction_4 (HappyAbsSyn6  happy_var_1)
+	 =  HappyAbsSyn5
+		 ([happy_var_1]
+	)
+happyReduction_4 _  = notHappyAtAll 
+
+happyReduce_5 = happySpecReduce_1  6 happyReduction_5
+happyReduction_5 _
+	 =  HappyAbsSyn6
+		 (Public
+	)
+
+happyReduce_6 = happySpecReduce_1  6 happyReduction_6
+happyReduction_6 _
+	 =  HappyAbsSyn6
+		 (Private
+	)
+
+happyReduce_7 = happySpecReduce_1  6 happyReduction_7
+happyReduction_7 _
+	 =  HappyAbsSyn6
+		 (Final
+	)
+
+happyReduce_8 = happySpecReduce_1  6 happyReduction_8
+happyReduction_8 _
+	 =  HappyAbsSyn6
+		 (Static
+	)
+
+happyReduce_9 = happySpecReduce_3  7 happyReduction_9
+happyReduction_9 _
+	(HappyAbsSyn8  happy_var_2)
+	_
+	 =  HappyAbsSyn7
+		 (happy_var_2
+	)
+happyReduction_9 _ _ _  = notHappyAtAll 
+
+happyReduce_10 = happySpecReduce_2  7 happyReduction_10
+happyReduction_10 _
+	_
+	 =  HappyAbsSyn7
+		 (([],[])
+	)
+
+happyReduce_11 = happySpecReduce_2  8 happyReduction_11
+happyReduction_11 (HappyAbsSyn9  happy_var_2)
+	(HappyAbsSyn8  happy_var_1)
+	 =  HappyAbsSyn8
+		 (case happy_var_2 of 
+							Field f -> (fst happy_var_1, (snd happy_var_1) ++ [f])
+							Function f -> ((fst happy_var_1) ++ [f],snd happy_var_1)
+	)
+happyReduction_11 _ _  = notHappyAtAll 
+
+happyReduce_12 = happySpecReduce_1  8 happyReduction_12
+happyReduction_12 (HappyAbsSyn9  happy_var_1)
+	 =  HappyAbsSyn8
+		 (case happy_var_1 of 
+							Field f -> ([],[f])
+							Function f -> ([f],[])
+	)
+happyReduction_12 _  = notHappyAtAll 
+
+happyReduce_13 = happySpecReduce_1  9 happyReduction_13
+happyReduction_13 _
+	 =  HappyAbsSyn9
+		 (Function (MemberFunction("","",[],[],Block([])))
+	)
+
+happyReduce_14 = happySpecReduce_1  10 happyReduction_14
+happyReduction_14 (HappyAbsSyn12  happy_var_1)
+	 =  HappyAbsSyn10
+		 (happy_var_1
+	)
+happyReduction_14 _  = notHappyAtAll 
+
+happyReduce_15 = happySpecReduce_1  10 happyReduction_15
+happyReduction_15 (HappyAbsSyn11  happy_var_1)
+	 =  HappyAbsSyn10
+		 (happy_var_1
+	)
+happyReduction_15 _  = notHappyAtAll 
+
+happyReduce_16 = happySpecReduce_1  11 happyReduction_16
+happyReduction_16 (HappyTerminal (IdentifierToken happy_var_1 _))
+	 =  HappyAbsSyn11
+		 (happy_var_1
+	)
+happyReduction_16 _  = notHappyAtAll 
+
+happyReduce_17 = happySpecReduce_3  12 happyReduction_17
+happyReduction_17 (HappyTerminal (IdentifierToken happy_var_3 _))
+	_
+	(HappyAbsSyn10  happy_var_1)
+	 =  HappyAbsSyn12
+		 (happy_var_1 ++ "." ++ happy_var_3
+	)
+happyReduction_17 _ _ _  = notHappyAtAll 
+
+happyReduce_18 = happySpecReduce_1  13 happyReduction_18
+happyReduction_18 (HappyAbsSyn14  happy_var_1)
+	 =  HappyAbsSyn13
+		 (happy_var_1
+	)
+happyReduction_18 _  = notHappyAtAll 
+
+happyReduce_19 = happySpecReduce_1  13 happyReduction_19
+happyReduction_19 (HappyAbsSyn15  happy_var_1)
+	 =  HappyAbsSyn13
+		 (happy_var_1
+	)
+happyReduction_19 _  = notHappyAtAll 
+
+happyReduce_20 = happySpecReduce_1  14 happyReduction_20
+happyReduction_20 _
+	 =  HappyAbsSyn14
+		 ("boolean"
+	)
+
+happyReduce_21 = happySpecReduce_1  14 happyReduction_21
+happyReduction_21 _
+	 =  HappyAbsSyn14
+		 ("int"
+	)
+
+happyReduce_22 = happySpecReduce_1  14 happyReduction_22
+happyReduction_22 _
+	 =  HappyAbsSyn14
+		 ("char"
+	)
+
+happyReduce_23 = happySpecReduce_1  15 happyReduction_23
+happyReduction_23 (HappyAbsSyn10  happy_var_1)
+	 =  HappyAbsSyn15
+		 (happy_var_1
+	)
+happyReduction_23 _  = notHappyAtAll 
+
 happyNewToken action sts stk [] =
-	action 9 9 notHappyAtAll (HappyState action) sts stk []
+	action 28 28 notHappyAtAll (HappyState action) sts stk []
 
 happyNewToken action sts stk (tk:tks) =
 	let cont i = action i i tk (HappyState action) sts stk tks in
 	case tk of {
-	Class _ -> cont 5;
-	LeftBraces _ -> cont 6;
-	RightBraces _ -> cont 7;
-	Identifier happy_dollar_dollar _ -> cont 8;
+	ClassToken _ -> cont 16;
+	LeftBracesToken _ -> cont 17;
+	RightBracesToken _ -> cont 18;
+	IdentifierToken happy_dollar_dollar _ -> cont 19;
+	PublicToken _ -> cont 20;
+	PrivateToken _ -> cont 21;
+	FinalToken _ -> cont 22;
+	StaticToken _ -> cont 23;
+	DotToken _ -> cont 24;
+	BooleanToken _ -> cont 25;
+	IntToken _ -> cont 26;
+	CharToken _ -> cont 27;
 	_ -> happyError' (tk:tks)
 	}
 
-happyError_ 9 tk tks = happyError' tks
+happyError_ 28 tk tks = happyError' tks
 happyError_ _ tk tks = happyError' (tk:tks)
 
 newtype HappyIdentity a = HappyIdentity a
@@ -81,11 +313,21 @@ parseJava tks = happyRunIdentity happySomeParser where
 happySeq = happyDontSeq
 
 
+data FieldOrFunction a
+	= Field a
+	| Function a
+
+
+
+
+
+
+
 parseError :: [Token] -> a
-parseError _ = error "parsing failed"
+parseError t = error (show t)
 
 main = do
-    print (alexScanTokens "class test { }")
+    putStrLn (drawAst(parseJava(alexScanTokens "public static class test { static }")))
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}
