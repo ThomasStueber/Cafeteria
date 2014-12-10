@@ -109,6 +109,7 @@ tokens :-
   "}"					{\p -> \s -> RightBracesToken p }
   "."					{\p -> \s -> DotToken p }
   ";"					{\p -> \s -> SemicolonToken p }
+  ","					{\p -> \s -> CommaToken p }
   
   [$char \_] [$char $digit \_]*				{\p -> \s -> IdentifierToken s p }
   \" [^\"\n]* \"					{\p -> \s -> StringLiteralToken s p }
@@ -180,6 +181,7 @@ data Token =
     VolatileToken AlexPosn			|
     WhileToken AlexPosn				|
     SemicolonToken AlexPosn			|
+    CommaToken AlexPosn				|
     PlusToken AlexPosn				|
     MinusToken AlexPosn				|
     MulToken AlexPosn				|

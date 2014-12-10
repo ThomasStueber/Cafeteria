@@ -11,22 +11,28 @@ data MemberFunction = MemberFunction(Typename, String, [(Typename, String)], [Mo
 
 data MemberField = MemberField(Modifier, Typename, String) deriving Show
 
+-- Statements haben in Java keinen Typ
 data Statement = Block([Statement])
 	       | While(Exp, Statement)                      		-- Abbruchbedingung, Schleifenkörper
 	       | If(Exp, Statement, Maybe Statement)       		-- Bedingung, If-Körper, Else-Körper 
 	       | Return(Exp)           					-- Ausdruck dessen Ergebniss zurück gegeben werden soll
 	       | LocalVarDecl(Typename, String)			   	-- Datentyp, Name
-	       | For(Maybe StatementExp, Maybe Exp, Maybe StatementExp, Statement)	-- for(Assign, Exp, Assign) Statement
+	       | For(Maybe StatementExp, Maybe Exp, Maybe StatementExp, Statement)	-- for(Assign, Exp, Assign), Anweisungen
+	       | Do(Statement, Exp)					--Anweisungen, Abbruchbedingung
 	       | StatementExpStatement(StatementExp)			-- 
 	       deriving Show
 	  
 	  
+-- StatementExp ist der Datentyp für Sprachkonstrukte die sowohl Expression als auch Statement sein können
 data StatementExp = Assign(Exp, Exp, String)			 	-- Exp1 = Exp2, String ist Operator
 	  	  | MethodCall(Exp, String, [Exp])		  	-- Instanz, Funktionsname, Parameter
 	  	  | New(Typename, [Exp])				-- Datentyp, Konstruktorparameter
+	  	  | PrefixUnary(String, Exp)				-- Operator, Ausdruck
+		  | PostfixUnary(String, Exp)				-- Operator, Ausdruck
 	  	  | TypedStatementExp(StatementExp, Typename)
 		  deriving Show		
 		  
+-- modifiers
 data Modifier = Public
 	      | Static
 	      | Private
@@ -36,14 +42,13 @@ data Modifier = Public
 	      
 	      
 
+-- Expressions
 data Exp = This 
 	  | Super
 	  | Infix(String, Exp, Exp)				-- Operator, linker Operand, rechter Operand
 	  | InstanceVar(Exp, String)				-- Instanz zu der die Variable gehört, Name der Variablen (siehe Script)
 	  | LocalOrFieldVar(String)				-- 
 	  | StatementExpExp(StatementExp)
-	  | PrefixUnary(String, Exp)				-- Operator, Ausdruck
-	  | PostfixUnary(String, Exp)				-- Operator, Ausdruck
 	  | String(String)					-- String Literal
 	  | Integer(Integer)					-- Int Literal
 	  | Boolean(Bool)					-- Boolean Literal
@@ -87,7 +92,7 @@ classDefToTree ::  ClassDef -> (Tree String)
 classDefToTree (ClassDef(t, modifiers, fl, vl, cl)) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node ("Modifiers: " ++ (show modifiers)) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl)]
 
 memberFunctionToTree ::  MemberFunction -> (Tree String)
-memberFunctionToTree (MemberFunction(t, name, parameter, modifier, statement)) = Node "MemberFunction" [Node ("Name: " ++ name) [], Node ("Rückgabedatentyp" ++ t) [], Node ("Modifier: " ++ (show modifier)) []]
+memberFunctionToTree (MemberFunction(t, name, parameter, modifier, statement)) = Node "MemberFunction" [Node ("Name: " ++ name) [], Node ("Rückgabedatentyp: " ++ t) [], Node ("Modifier: " ++ (show modifier)) [], Node ("Parameter: " ++ (show parameter)) []]
 
 memberFieldToTree ::  MemberField -> (Tree String)
 memberFieldToTree (MemberField(modifier, t, name)) = Node "MemberField" [Node ("Name: " ++ name) [], Node ("Datentyp" ++ t) [], Node ("Modifier: " ++ (show modifier)) []]
@@ -105,11 +110,11 @@ statementExpToTree (Assign(e1, e2, op)) = Node "Zuweisung" [Node ("Operator: " +
 statementExpToTree (New(t, pl)) = Node "New" [Node ("Datentyp: " ++ t) [], Node "Konstruktor-Parameter" (makeNodesExp pl)]
 statementExpToTree (MethodCall(inst, name, pl)) = Node "MethodCall" [Node "Instanz" [expToTree inst], Node ("Name: " ++ name) [], Node "Parameter" (makeNodesExp pl)]
 statementExpToTree (TypedStatementExp(se,t)) = Node "Typed-StatementExpression" [Node ("Typ: " ++ t) [], statementExpToTree se]
+statementExpToTree (PostfixUnary(op,a)) = Node "Postfix-Expression" [Node ("Operator: " ++ op) [], expToTree a]
+statementExpToTree (PrefixUnary(op,a)) = Node "Postfix-Expression" [Node ("Operator: " ++ op) [], expToTree a]
 
 expToTree :: Exp -> (Tree String)
 expToTree (Infix(op,a,b)) = Node "Infix-Expression" [Node ("Operator: " ++ op) [], expToTree a, expToTree b]
-expToTree (PostfixUnary(op,a)) = Node "Postfix-Expression" [Node ("Operator: " ++ op) [], expToTree a]
-expToTree (PrefixUnary(op,a)) = Node "Postfix-Expression" [Node ("Operator: " ++ op) [], expToTree a]
 expToTree (InstanceVar(i, name)) = Node "Instanz-Variable" [Node ("Name: " ++ name) [], Node "Instanz" [(expToTree i)]]
 expToTree (TypedExp(e,t)) = Node "Typed-Expression" [Node ("Typ: " ++ t) [], expToTree e]
 expToTree e@_ = Node (show e) []
