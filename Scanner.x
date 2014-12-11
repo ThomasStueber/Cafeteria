@@ -61,7 +61,7 @@ tokens :-
   
   true					{\p -> \s -> BooleanLiteralToken True p}
   false					{\p -> \s -> BooleanLiteralToken False p}
-  null					{\p -> \s -> NullLiteralToken p}
+  null					{\p -> \s -> NullToken p}
   
   
   "+"					{\p -> \s -> PlusToken p }
@@ -111,6 +111,7 @@ tokens :-
   ";"					{\p -> \s -> SemicolonToken p }
   ","					{\p -> \s -> CommaToken p }
   
+  $digit+						{\p -> \s -> IntLiteralToken s p}
   [$char \_] [$char $digit \_]*				{\p -> \s -> IdentifierToken s p }
   \" [^\"\n]* \"					{\p -> \s -> StringLiteralToken s p }
   \' [^\'\n] \'						{\p -> \s -> CharLiteralToken s p }
@@ -119,7 +120,7 @@ tokens :-
   -- Java Operators
   
   $white+				;
-  [0-9] ([^$white])+			{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is not a lexem! Identifiers can't start with digits.")
+  [0-9] ([A-Za-z\_])+			{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is not a lexem! Identifiers can't start with digits.")
 						      ErrorToken}
   .					{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is a forbidden character.")
 						      ErrorToken}
@@ -228,10 +229,10 @@ data Token =
     RightBracesToken AlexPosn			|
     CharLiteralToken String AlexPosn		|
     StringLiteralToken String AlexPosn		|
-    IntLiteralToken Int AlexPosn		|
+    IntLiteralToken String AlexPosn		|
     FloatLiteralToken AlexPosn			|
     BooleanLiteralToken Bool AlexPosn		|
-    NullLiteralToken AlexPosn			|
+    NullToken AlexPosn				|
     IdentifierToken String AlexPosn		|
     ErrorToken
     deriving (Eq, Show)

@@ -46,14 +46,16 @@ data Modifier = Public
 data Exp = This 
 	  | Super
 	  | Infix(String, Exp, Exp)				-- Operator, linker Operand, rechter Operand
+	  | Unary(String, Exp)
 	  | InstanceVar(Exp, String)				-- Instanz zu der die Variable gehört, Name der Variablen (siehe Script)
 	  | LocalOrFieldVar(String)				-- 
 	  | StatementExpExp(StatementExp)
 	  | String(String)					-- String Literal
-	  | Integer(Integer)					-- Int Literal
+	  | Integer(Int)					-- Int Literal
 	  | Boolean(Bool)					-- Boolean Literal
 	  | Char(Char)						-- Char Literal
 	  | Null						-- Null
+	  | Cast(Typename, Exp)					-- Cast
 	  | TypedExp(Exp, Typename)
 	  deriving Show
 
@@ -92,7 +94,7 @@ classDefToTree ::  ClassDef -> (Tree String)
 classDefToTree (ClassDef(t, modifiers, fl, vl, cl)) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node ("Modifiers: " ++ (show modifiers)) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl)]
 
 memberFunctionToTree ::  MemberFunction -> (Tree String)
-memberFunctionToTree (MemberFunction(t, name, parameter, modifier, statement)) = Node "MemberFunction" [Node ("Name: " ++ name) [], Node ("Rückgabedatentyp: " ++ t) [], Node ("Modifier: " ++ (show modifier)) [], Node ("Parameter: " ++ (show parameter)) []]
+memberFunctionToTree (MemberFunction(t, name, parameter, modifier, statement)) = Node "MemberFunction" [Node ("Name: " ++ name) [], Node ("Rückgabedatentyp: " ++ t) [], Node ("Modifier: " ++ (show modifier)) [], Node ("Parameter: " ++ (show parameter)) [], Node "Body" [statementToTree statement]]
 
 memberFieldToTree ::  MemberField -> (Tree String)
 memberFieldToTree (MemberField(modifier, t, name)) = Node "MemberField" [Node ("Name: " ++ name) [], Node ("Datentyp" ++ t) [], Node ("Modifier: " ++ (show modifier)) []]
@@ -100,7 +102,7 @@ memberFieldToTree (MemberField(modifier, t, name)) = Node "MemberField" [Node ("
 statementToTree :: Statement -> (Tree String)
 statementToTree (Block(sl)) = Node "Block" (makeNodesStatement sl)
 statementToTree (While(e, s)) = Node "While" [Node "Schleifenkopf" [(expToTree e)], Node "Schleifenkörper" [(statementToTree s)]]
-statementToTree (If(e, ib, eb)) = Node "If" [Node "Bedingung" [(expToTree e)], Node "If-Körper" [(statementToTree ib)], if (isJust eb) then (Node "Else" [statementToTree (fromJust eb)]) else (Node "Kein Else-Statement" [])]
+statementToTree (If(e, ib, eb)) = Node "If" [Node "Bedingung" [(expToTree e)], Node "If-Body" [(statementToTree ib)], if (isJust eb) then (Node "Else" [statementToTree (fromJust eb)]) else (Node "Kein Else-Statement" [])]
 statementToTree (Return(e)) = Node "Return" [Node "Return-Expression" [(expToTree e)]]
 statementToTree (LocalVarDecl(t, name)) = Node "Dekl. lokaler Variable" [Node ("Name: " ++ name) [], Node ("Datentyp: " ++ t) []]
 statementToTree (For(init, e, inc, s)) = Node "For"  [if (isJust init) then (Node "Initialisierung" [(statementExpToTree (fromJust init))]) else (Node "Keine Initialisierung" []), if (isJust e) then (Node "Abbruchbedingung" [(expToTree (fromJust e))]) else (Node "Keine Abbruchbedingung" []), if (isJust inc) then (Node "Inkrementierung" [(statementExpToTree (fromJust inc))]) else (Node "Keine Inkrementierung" []), Node "Schleifenkörper" [(statementToTree s)]]
