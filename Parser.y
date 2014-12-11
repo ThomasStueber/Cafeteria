@@ -11,7 +11,6 @@ import Data.Maybe
 
 
 -- 1 shift/reduce Konflikt durch if-else Konstrukt, kein Problem da shift gewünschte Operation ist
--- 6 shift/reduce Konfikte durch Unäre Operatoren
 %token
       class			{ClassToken _}
       '{' 			{LeftBracesToken _}
@@ -66,6 +65,7 @@ import Data.Maybe
       '++'			{PlusPlusToken _}
       '--'			{MinusMinusToken _}
       '!'			{NotToken _}
+      ';'			{SemicolonToken _}
       literal_int		{IntLiteralToken $$ _}	
       stringliteral		{StringLiteralToken $$ _}
       boolliteral		{BooleanLiteralToken $$ _}
@@ -158,7 +158,7 @@ statement		: '{' statements '}'				{Block($2)}
 			| statementexpstatement				{$1}
 			
 
-statements		: statements statement				{$1 ++ [$2]}
+statements		: statements ';' statement			{$1 ++ [$3]}
 			| statement					{[$1]}
 
 statementexpstatement	: assignmentstatement				{StatementExpStatement($1)}
@@ -180,7 +180,7 @@ assignmentstatement	: exp '=' exp 		{Assign($1,$3,"=")}
 			| exp '|=' exp 		{Assign($1,$3,"|=")}
 			| exp '^=' exp 		{Assign($1,$3,"^=")}
 
-parameters		: parameters exp 	{$1 ++ [$2]}
+parameters		: parameters ',' exp 	{$1 ++ [$3]}
 			| exp			{[$1]}
 			
 			
