@@ -10,7 +10,8 @@ import Data.Maybe
 %error {parseError}
 
 
--- 1 shift/reduce Konflikt durch if-else Konstrukt, kein Problem da shift gewünschte Operation ist
+-- 2 shift/reduce Konflikt durch if-else Konstrukt, kein Problem da shift gewünschte Operation ist
+-- 2 shift/reduce Konflikt durch verschiedene Casts
 %token
       class			{ClassToken _}
       '{' 			{LeftBracesToken _}
@@ -19,7 +20,6 @@ import Data.Maybe
       public 			{PublicToken _}
       private			{PrivateToken _}
       final 			{FinalToken _}
-      static 			{StaticToken _}
       '.'			{DotToken _}
       null			{NullToken _}
       boolean			{BooleanToken _}
@@ -60,11 +60,10 @@ import Data.Maybe
       '<<'			{SignedLeftShiftToken _}
       '>>>'			{UnsignedRightShiftToken _}
       '%'			{ModuloToken _}
-      '['			{LeftBracketToken _}
-      ']'			{RightBracketToken _}
       '++'			{PlusPlusToken _}
       '--'			{MinusMinusToken _}
       '!'			{NotToken _}
+      '~'			{BitNotToken _}
       ';'			{SemicolonToken _}
       literal_int		{IntLiteralToken $$ _}	
       stringliteral		{StringLiteralToken $$ _}
@@ -74,7 +73,13 @@ import Data.Maybe
       return 			{ReturnToken _}
       while 			{WhileToken _}
       do 			{DoToken _}
+      for 			{ForToken _}
       new 			{NewToken _}
+      this 			{ThisToken _}
+      super 			{SuperToken _}
+      break 			{BreakToken _}
+      continue 			{ContinueToken _}
+      
       
       
       
@@ -89,27 +94,14 @@ import Data.Maybe
 %left '>>' '<<' '>>>' 
 %left '+' '-'
 %left '*' '/' '%'
-%right UNARY
+%right UNARY '!' '~' '++' '--' CAST NEW
 %left '[' ']' '(' ')' '.'
       
 %%
-
-classdef :: {ClassDef}
 classdef 		: class identifier classbody			{ ClassDef($2, [], [], [], []) }
 			| modifiers class identifier classbody		{ ClassDef($3, $1, fst $4, [], [])}
 
-
-modifiers :: {[Modifier]}
-modifiers 		: modifiers modifier 				{$1 ++ [$2]}
-			| modifier					{[$1]}
-
-modifier :: {Modifier}			
-modifier		: public 					{Public}
-			| private 					{Private}
-			| final 					{Final}
-			| static 					{Static}
-
-
+			
 classbody 		: '{' classbodyelements '}'		{$2}
 			| '{' '}'				{([],[])}
 
@@ -129,13 +121,22 @@ classbodyelements 	: classbodyelements classbodyelement
 
 
 classbodyelement 	: functiondecl  {Function $1}
-			-- | fielddecl  {Field $1}
-					
+			| fielddecl  {Field $1}
+			
+fielddecl		: type identifier ';' 				{MemberField([],$1, $2, Nothing)}
+			| modifiers type identifier ';' 		{MemberField($1, $2, $3, Nothing)}
+			| type identifier '=' exp ';' 			{MemberField([],$1, $2, Just $4)}
+			| modifiers type identifier '=' exp ';' 	{MemberField($1, $2, $3, Just $5)}
+			
+			
+			
+functiondecl		: functionhead statement				{MemberFunction(fst $1, fst (snd $1), fst (snd (snd $1)), snd (snd (snd $1)), $2)}
 
-functiondecl		: functionhead functionbody				{MemberFunction(fst $1, fst (snd $1), fst (snd (snd $1)), snd (snd (snd $1)), $2)}
-
-functionhead		: functiontype identifier functionparameters	{($1,($2,($3,[])))}
-			| modifiers functiontype identifier functionparameters	{($2,($3,($4,[])))}
+functionhead		: type identifier functionparameters	{($1,($2,($3,[])))}
+			| modifiers type identifier functionparameters	{($2,($3,($4,$1)))}
+			| void identifier functionparameters	{("void",($2,($3,[])))}
+			| modifiers void identifier functionparameters	{("void",($3,($4,$1)))}
+			
 
 functionparameters	: '(' formalparameters ')'			{$2}
 			| '(' ')'					{[]}
@@ -144,29 +145,101 @@ formalparameters	: formalparameters ',' formalparameter		{$1 ++ [$3]}
 			| formalparameter				{[$1]}
 			
 formalparameter		: type identifier				{($1, $2)}
+			
+modifiers 		: modifiers modifier 				{$1 ++ [$2]}
+			| modifier					{[$1]}
 
-functionbody 		: statement					{$1}
+			
+modifier		: public 					{Public}
+			| private 					{Private}
 
-statement		: '{' statements '}'				{Block($2)}
-			| '{' '}'					{Block([])}
+statement		: type identifier ';'				{LocalVarDecl($1, $2, Nothing)}
+			| return exp ';' 				{Return($2)}
 			| if '(' exp ')' statement			{If($3, $5, Nothing)}
 			| if '(' exp ')' statement else statement	{If($3, $5, Just $7)}
-			| type simplename				{LocalVarDecl($1, $2)}
-			| return exp 					{Return($2)}
-			| while '(' exp ')' statement			{While($3, $5)}
-			| do statement while '(' exp ')'		{Do($2, $5)}
+			| '{' statements '}'				{Block($2)}
+			| '{' '}'					{Block([])}
+			| type identifier '=' exp ';'			{LocalVarDecl($1, $2, Just $4)}
+			| final type identifier '=' exp ';'		{LocalFinalDecl($2, $3, $5)}
+			| while '(' exp ')' insideloopstatement 			{While($3, $5)}
+			| do insideloopstatement while '(' exp ')'		{Do($2, $5)}
+			| for '(' forinitstatement exp ';' forincstatement ')' insideloopstatement	{For($3, Just $4, Just $6, $8)}
+			| for '(' forinitstatement ';' forincstatement ')' insideloopstatement		{For($3, Nothing, Just $5, $7)}
+			| for '(' forinitstatement exp ';' ')' insideloopstatement			{For($3, Just $4, Nothing, $7)}
+			| for '(' forinitstatement ';' ')' insideloopstatement				{For($3, Nothing, Nothing, $6)}
 			| statementexpstatement				{$1}
+			| ';'						{EmptyStatement}
+			| methodeorinstance ';'				
+			{
+			case $1 of
+					(StatementExpExp(MethodCall (e,n,p))) -> StatementExpStatement(MethodCall(e,n,p))
+					_ -> error "not a statement"
+			}
+			| break ';'					{error "break outside of loop or conditional"}
+			| continue ';'					{error "continue outside of loop"}
+			
+			
+insideloopstatement	: type identifier ';'				{LocalVarDecl($1, $2, Nothing)}
+			| return exp ';' 				{Return($2)}
+			| if '(' exp ')' insideloopstatement			{If($3, $5, Nothing)}
+			| if '(' exp ')' insideloopstatement else insideloopstatement	{If($3, $5, Just $7)}
+			| '{' insideloopstatements '}'				{Block($2)}
+			| '{' '}'					{Block([])}
+			| type identifier '=' exp ';'			{LocalVarDecl($1, $2, Just $4)}
+			| final type identifier '=' exp ';'		{LocalFinalDecl($2, $3, $5)}
+			| while '(' exp ')' insideloopstatement 			{While($3, $5)}
+			| do insideloopstatement while '(' exp ')'		{Do($2, $5)}
+			| for '(' forinitstatement exp ';' forincstatement ')' insideloopstatement	{For($3, Just $4, Just $6, $8)}
+			| for '(' forinitstatement ';' forincstatement ')' insideloopstatement		{For($3, Nothing, Just $5, $7)}
+			| for '(' forinitstatement exp ';' ')' insideloopstatement			{For($3, Just $4, Nothing, $7)}
+			| for '(' forinitstatement ';' ')' insideloopstatement				{For($3, Nothing, Nothing, $6)}
+			| statementexpstatement				{$1}
+			| ';'						{EmptyStatement}
+			| methodeorinstance ';'				
+			{
+			case $1 of
+					(StatementExpExp(MethodCall (e,n,p))) -> StatementExpStatement(MethodCall(e,n,p))
+					_ -> error "not a statement"
+			}
+			| break ';'					{Break}
+			| continue ';'					{Continue}
+			
+			
+forinitstatement	: type identifier '=' exp ';'			{LocalVarDecl($1, $2, Just $4)}
+			| ';'						{EmptyStatement}
+			| exp '=' exp ';'				{StatementExpStatement(Assign($1,$3, "="))}
+			
+forincstatement		: exp '++'					{(PostfixUnary("++", $1))}
+			| '++' exp					{(PrefixUnary("++", $2))}
+			| exp '--'					{(PostfixUnary("--", $1))}
+			| '--' exp					{(PrefixUnary("--", $2))}
+			| assignmentstatement				{($1)}
+			| methodeorinstance
+			{
+			case $1 of
+					(StatementExpExp(MethodCall (e,n,p))) -> (MethodCall(e,n,p))
+					_ -> error "not a statement"
+			}
+			
+statementexpstatement	: assignmentstatement ';'			{StatementExpStatement($1)}
+			| newstatement ';'				{StatementExpStatement($1)}
+			| exp '++' ';'					{StatementExpStatement(PostfixUnary("++", $1))}
+			| '++' exp ';'					{StatementExpStatement(PrefixUnary("++", $2))}
+			| exp '--' ';'					{StatementExpStatement(PostfixUnary("--", $1))}
+			| '--' exp ';'					{StatementExpStatement(PrefixUnary("--", $2))}
 			
 
-statements		: statements ';' statement			{$1 ++ [$3]}
-			| statement					{[$1]}
+			
+			
+			
+			
+newstatement		: new type '(' parameters ')' %prec NEW		{New($2, $4)}
+			| new type '(' ')' %prec NEW			{New($2, [])}
+			
+parameters		: parameters ',' exp 	{$1 ++ [$3]}
+			| exp			{[$1]}
+			
 
-statementexpstatement	: assignmentstatement				{StatementExpStatement($1)}
-			| newstatement					{StatementExpStatement($1)}
-			
-newstatement		: new type '(' parameters ')'		{New($2, $4)}
-			| new type '(' ')'			{New($2, [])}
-			
 assignmentstatement	: exp '=' exp 		{Assign($1,$3,"=")}
 			| exp '+=' exp 		{Assign($1,$3,"+=")}
 			| exp '-=' exp 		{Assign($1,$3,"-=")}
@@ -179,42 +252,57 @@ assignmentstatement	: exp '=' exp 		{Assign($1,$3,"=")}
 			| exp '&=' exp 		{Assign($1,$3,"&=")}
 			| exp '|=' exp 		{Assign($1,$3,"|=")}
 			| exp '^=' exp 		{Assign($1,$3,"^=")}
-
-parameters		: parameters ',' exp 	{$1 ++ [$3]}
-			| exp			{[$1]}
 			
+
+statements		: statements statement				{$1 ++ [$2]}
+			| statement					{[$1]}
 			
-name 			: qualifiedname		{$1}
-			| simplename		{$1}
-					
-simplename		: identifier		{$1}
-
-qualifiedname		: name '.' identifier	{$1 ++ "." ++ $3}
-
-type 			: primitivetype			{$1}
-			| referencetype			{$1}
-					
-primitivetype		: boolean		{"boolean"}
-			| integer		{"int"}
-			| char 			{"char"}
-					
-referencetype		: name			{$1}
-
-
-functiontype		: type			{$1}
-			| void			{"void"}
-			
-			
+insideloopstatements		: insideloopstatements insideloopstatement		{$1 ++ [$2]}
+				| insideloopstatement					{[$1]}
 			
 			
 exp 			: infixexp		{$1}
 			| intliteral		{$1}
-			| '(' type ')' exp	{Cast($2, $4)}
-			| '(' exp ')'		{$2}
+			| simplename		{LocalOrFieldVar($1)}
+			| exp '++'		{StatementExpExp(PostfixUnary("++", $1))}
+			| exp '--'		{StatementExpExp(PostfixUnary("--", $1))}
+			| '++' exp		{StatementExpExp(PrefixUnary("++", $2))}
+			| '--' exp		{StatementExpExp(PrefixUnary("--", $2))}
+			| unaryexp		{$1}
+			| methodeorinstance	{$1}	
+			| qualifiedname		{snd $1}
+			| this			{This}
+			| super			{Super}
+			| newstatement 		{StatementExpExp($1)}
 			| stringliteral		{String($1)}
 			| boolliteral		{Boolean($1)}
 			| null			{Null}
-			| unaryexp		{$1}
+			| '(' qualifiedname ')' exp %prec CAST	{Cast($2, $4)}
+			| '(' identifier ')' exp %prec CAST	{Cast($2, $4)}
+			| '(' primitivetype ')' exp %prec CAST	{Cast($2, $4)}
+			| '(' exp ')'		{$2}
+			
+			
+	
+	
+			
+
+methodeorinstance		: identifier '(' parameters ')' {StatementExpExp(MethodCall(This, $1, $3))}
+				| methodeorinstance '.' identifier '(' parameters ')' {StatementExpExp(MethodCall($1, $3, $5))}
+				| qualifiedname '(' parameters ')' {StatementExpExp(MethodCall((snd $1), "", $3))}
+				| identifier '('  ')' {StatementExpExp(MethodCall(This, $1, []))}
+				| methodeorinstance '.' identifier '('  ')' {StatementExpExp(MethodCall($1, $3, []))}
+				| methodeorinstance '.' identifier	{InstanceVar($1, $3)}
+				| qualifiedname '('  ')' {StatementExpExp(MethodCall((snd $1), "", []))}
+				| this '.' identifier	{InstanceVar(This, $3)}
+				| this '.' identifier '(' ')'	{StatementExpExp(MethodCall(This, $3, []))}
+				| this '.' identifier '(' parameters ')'	{StatementExpExp(MethodCall(This, $3, $5))}
+				
+				
+				
+				
+				
+			
 			
 infixexp		: exp '+' exp 		{Infix("+", $1,$3)}
 			| exp '*' exp 		{Infix("*", $1,$3)}
@@ -229,22 +317,65 @@ infixexp		: exp '+' exp 		{Infix("+", $1,$3)}
 			| exp '^' exp		{Infix("^", $1,$3)}
 			| exp '&&' exp		{Infix("&&", $1,$3)}
 			| exp '||' exp		{Infix("||", $1,$3)}
+			| exp '<' exp		{Infix("<", $1,$3)}
+			| exp '>' exp		{Infix(">", $1,$3)}
+			| exp '>=' exp		{Infix(">=", $1,$3)}
+			| exp '<=' exp		{Infix("<=", $1,$3)}
+			| exp '==' exp		{Infix("==", $1,$3)}
+			| exp '!=' exp		{Infix("!=", $1,$3)}
+			| exp '=' exp 		{StatementExpExp(Assign($1,$3,"="))}
+			| exp '+=' exp 		{StatementExpExp(Assign($1,$3,"+="))}
+			| exp '-=' exp 		{StatementExpExp(Assign($1,$3,"-="))}
+			| exp '*=' exp 		{StatementExpExp(Assign($1,$3,"*="))}
+			| exp '/=' exp 		{StatementExpExp(Assign($1,$3,"/="))}
+			| exp '%=' exp 		{StatementExpExp(Assign($1,$3,"%="))}
+			| exp '<<=' exp 	{StatementExpExp(Assign($1,$3,"<<="))}
+			| exp '>>=' exp 	{StatementExpExp(Assign($1,$3,">>="))}
+			| exp '>>>=' exp 	{StatementExpExp(Assign($1,$3,">>>="))}
+			| exp '&=' exp 		{StatementExpExp(Assign($1,$3,"&="))}
+			| exp '|=' exp 		{StatementExpExp(Assign($1,$3,"|="))}
+			| exp '^=' exp 		{StatementExpExp(Assign($1,$3,"^="))}
 			
+
 unaryexp		: '-' exp %prec UNARY	{Unary("-", $2)}
 			| '+' exp %prec UNARY	{Unary("+", $2)}
 			| '!' exp %prec UNARY	{Unary("!", $2)}
+			| '~' exp %prec UNARY	{Unary("~", $2)}
 			
 			
+			
+			
+intliteral		: literal_int		{Integer(read $1)}
+
+simplename		: identifier		{$1}
+
+qualifiedname		: identifier '.' identifier	{(($1 ++ "." ++ $3), (InstanceVar(LocalOrFieldVar($1), $3)))}
+			| qualifiedname '.' identifier	{(((fst $1) ++ "." ++ $3), (InstanceVar((snd $1), $3)))}
+
+type 			: primitivetype			{$1}
+			| referencetype			{$1}
+					
+primitivetype		: boolean		{"boolean"}
+			| integer		{"int"}
+			| char 			{"char"}
+					
+referencetype		: qualifiedname		{fst $1}
+			| simplename		{$1}
+
+
+functiontype		: type			{$1}
+			| void			{"void"}
 			
 
-intliteral		: literal_int		{Integer(read $1)}
+			
+
+
 
 {
 
-data ClassElement a
-	= Field a
-	| Function a
-	| Constructor a
+data ClassElement 
+	= Field MemberField
+	| Function MemberFunction
 
 data StatementOrExp a
 	= Statement a
@@ -257,5 +388,5 @@ parseError :: [Token] -> a
 parseError t = error (show t)
 
 main = do
-    putStrLn (drawAst(parseJava(alexScanTokens "public static class test { void t (int g, int h) {if (1 - 2 * 2 - 2) {}} } ")))
+    putStrLn (drawAst(parseJava(alexScanTokens "this.a(3*4);")))
 }

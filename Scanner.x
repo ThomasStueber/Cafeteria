@@ -110,6 +110,7 @@ tokens :-
   "."					{\p -> \s -> DotToken p }
   ";"					{\p -> \s -> SemicolonToken p }
   ","					{\p -> \s -> CommaToken p }
+  "~"					{\p -> \s -> BitNotToken p }
   
   $digit+						{\p -> \s -> IntLiteralToken s p}
   [$char \_] [$char $digit \_]*				{\p -> \s -> IdentifierToken s p }
@@ -217,6 +218,7 @@ data Token =
     BitAndToken AlexPosn			|
     BitOrToken AlexPosn				|
     BitXorToken AlexPosn			|
+    BitNotToken AlexPosn			|
     SignedLeftShiftToken AlexPosn		|
     SignedRightShiftToken AlexPosn		|
     UnsignedRightShiftToken AlexPosn		|
