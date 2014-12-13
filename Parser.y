@@ -1,5 +1,5 @@
 {
-module Main (main, parseJava) where
+module Parser (parseJava) where
 import Scanner
 import Abs
 import Data.Maybe
@@ -63,7 +63,7 @@ import Data.Maybe
       '++'			{PlusPlusToken _}
       '--'			{MinusMinusToken _}
       '!'			{NotToken _}
-      '~'			{BitNotToken _}
+      '~'			{BitComplementToken _}
       ';'			{SemicolonToken _}
       literal_int		{IntLiteralToken $$ _}	
       stringliteral		{StringLiteralToken $$ _}
@@ -207,12 +207,12 @@ insideloopstatement	: type identifier ';'				{LocalVarDecl($1, $2, Nothing)}
 			
 forinitstatement	: type identifier '=' exp ';'			{LocalVarDecl($1, $2, Just $4)}
 			| ';'						{EmptyStatement}
-			| exp '=' exp ';'				{StatementExpStatement(Assign($1,$3, "="))}
+			| lefthandside '=' exp ';'				{StatementExpStatement(Assign($1,$3, "="))}
 			
-forincstatement		: exp '++'					{(PostfixUnary("++", $1))}
-			| '++' exp					{(PrefixUnary("++", $2))}
-			| exp '--'					{(PostfixUnary("--", $1))}
-			| '--' exp					{(PrefixUnary("--", $2))}
+forincstatement		: lefthandside '++'					{(PostfixUnary("++", $1))}
+			| '++' lefthandside					{(PrefixUnary("++", $2))}
+			| lefthandside '--'					{(PostfixUnary("--", $1))}
+			| '--' lefthandside					{(PrefixUnary("--", $2))}
 			| assignmentstatement				{($1)}
 			| methodeorinstance
 			{
@@ -223,10 +223,10 @@ forincstatement		: exp '++'					{(PostfixUnary("++", $1))}
 			
 statementexpstatement	: assignmentstatement ';'			{StatementExpStatement($1)}
 			| newstatement ';'				{StatementExpStatement($1)}
-			| exp '++' ';'					{StatementExpStatement(PostfixUnary("++", $1))}
-			| '++' exp ';'					{StatementExpStatement(PrefixUnary("++", $2))}
-			| exp '--' ';'					{StatementExpStatement(PostfixUnary("--", $1))}
-			| '--' exp ';'					{StatementExpStatement(PrefixUnary("--", $2))}
+			| lefthandside '++' ';'					{StatementExpStatement(PostfixUnary("++", $1))}
+			| '++' lefthandside ';'					{StatementExpStatement(PrefixUnary("++", $2))}
+			| lefthandside '--' ';'					{StatementExpStatement(PostfixUnary("--", $1))}
+			| '--' lefthandside ';'					{StatementExpStatement(PrefixUnary("--", $2))}
 			
 
 			
@@ -240,18 +240,18 @@ parameters		: parameters ',' exp 	{$1 ++ [$3]}
 			| exp			{[$1]}
 			
 
-assignmentstatement	: exp '=' exp 		{Assign($1,$3,"=")}
-			| exp '+=' exp 		{Assign($1,$3,"+=")}
-			| exp '-=' exp 		{Assign($1,$3,"-=")}
-			| exp '*=' exp 		{Assign($1,$3,"*=")}
-			| exp '/=' exp 		{Assign($1,$3,"/=")}
-			| exp '%=' exp 		{Assign($1,$3,"%=")}
-			| exp '<<=' exp 	{Assign($1,$3,"<<=")}
-			| exp '>>=' exp 	{Assign($1,$3,">>=")}
-			| exp '>>>=' exp 	{Assign($1,$3,">>>=")}
-			| exp '&=' exp 		{Assign($1,$3,"&=")}
-			| exp '|=' exp 		{Assign($1,$3,"|=")}
-			| exp '^=' exp 		{Assign($1,$3,"^=")}
+assignmentstatement	: lefthandside '=' exp 		{Assign($1,$3,"=")}
+			| lefthandside '+=' exp 		{Assign($1,$3,"+=")}
+			| lefthandside '-=' exp 		{Assign($1,$3,"-=")}
+			| lefthandside '*=' exp 		{Assign($1,$3,"*=")}
+			| lefthandside '/=' exp 		{Assign($1,$3,"/=")}
+			| lefthandside '%=' exp 		{Assign($1,$3,"%=")}
+			| lefthandside '<<=' exp 	{Assign($1,$3,"<<=")}
+			| lefthandside '>>=' exp 	{Assign($1,$3,">>=")}
+			| lefthandside '>>>=' exp 	{Assign($1,$3,">>>=")}
+			| lefthandside '&=' exp 		{Assign($1,$3,"&=")}
+			| lefthandside '|=' exp 		{Assign($1,$3,"|=")}
+			| lefthandside '^=' exp 		{Assign($1,$3,"^=")}
 			
 
 statements		: statements statement				{$1 ++ [$2]}
@@ -263,28 +263,30 @@ insideloopstatements		: insideloopstatements insideloopstatement		{$1 ++ [$2]}
 			
 exp 			: infixexp		{$1}
 			| intliteral		{$1}
-			| simplename		{LocalOrFieldVar($1)}
-			| exp '++'		{StatementExpExp(PostfixUnary("++", $1))}
-			| exp '--'		{StatementExpExp(PostfixUnary("--", $1))}
-			| '++' exp		{StatementExpExp(PrefixUnary("++", $2))}
-			| '--' exp		{StatementExpExp(PrefixUnary("--", $2))}
+			| lefthandside '++'		{StatementExpExp(PostfixUnary("++", $1))}
+			| lefthandside '--'		{StatementExpExp(PostfixUnary("--", $1))}
+			| '++' lefthandside		{StatementExpExp(PrefixUnary("++", $2))}
+			| '--' lefthandside		{StatementExpExp(PrefixUnary("--", $2))}
 			| unaryexp		{$1}
-			| methodeorinstance	{$1}	
-			| qualifiedname		{snd $1}
 			| this			{This}
 			| super			{Super}
 			| newstatement 		{StatementExpExp($1)}
 			| stringliteral		{String($1)}
 			| boolliteral		{Boolean($1)}
 			| null			{Null}
-			| '(' qualifiedname ')' exp %prec CAST	{Cast($2, $4)}
+			| '(' qualifiedname ')' exp %prec CAST	{Cast(fst $2, $4)}
 			| '(' identifier ')' exp %prec CAST	{Cast($2, $4)}
 			| '(' primitivetype ')' exp %prec CAST	{Cast($2, $4)}
 			| '(' exp ')'		{$2}
+			| lefthandside		{$1}
+
+lefthandside		: methodeorinstance	{$1}	
+			| qualifiedname		{snd $1}
+			| simplename		{LocalOrFieldVar($1)}
+			| '(' lefthandside ')'	{$2}
 			
 			
-	
-	
+			
 			
 
 methodeorinstance		: identifier '(' parameters ')' {StatementExpExp(MethodCall(This, $1, $3))}
@@ -323,18 +325,18 @@ infixexp		: exp '+' exp 		{Infix("+", $1,$3)}
 			| exp '<=' exp		{Infix("<=", $1,$3)}
 			| exp '==' exp		{Infix("==", $1,$3)}
 			| exp '!=' exp		{Infix("!=", $1,$3)}
-			| exp '=' exp 		{StatementExpExp(Assign($1,$3,"="))}
-			| exp '+=' exp 		{StatementExpExp(Assign($1,$3,"+="))}
-			| exp '-=' exp 		{StatementExpExp(Assign($1,$3,"-="))}
-			| exp '*=' exp 		{StatementExpExp(Assign($1,$3,"*="))}
-			| exp '/=' exp 		{StatementExpExp(Assign($1,$3,"/="))}
-			| exp '%=' exp 		{StatementExpExp(Assign($1,$3,"%="))}
-			| exp '<<=' exp 	{StatementExpExp(Assign($1,$3,"<<="))}
-			| exp '>>=' exp 	{StatementExpExp(Assign($1,$3,">>="))}
-			| exp '>>>=' exp 	{StatementExpExp(Assign($1,$3,">>>="))}
-			| exp '&=' exp 		{StatementExpExp(Assign($1,$3,"&="))}
-			| exp '|=' exp 		{StatementExpExp(Assign($1,$3,"|="))}
-			| exp '^=' exp 		{StatementExpExp(Assign($1,$3,"^="))}
+			| lefthandside '=' exp 		{StatementExpExp(Assign($1,$3,"="))}
+			| lefthandside '+=' exp 		{StatementExpExp(Assign($1,$3,"+="))}
+			| lefthandside '-=' exp 		{StatementExpExp(Assign($1,$3,"-="))}
+			| lefthandside '*=' exp 		{StatementExpExp(Assign($1,$3,"*="))}
+			| lefthandside '/=' exp 		{StatementExpExp(Assign($1,$3,"/="))}
+			| lefthandside '%=' exp 		{StatementExpExp(Assign($1,$3,"%="))}
+			| lefthandside '<<=' exp 	{StatementExpExp(Assign($1,$3,"<<="))}
+			| lefthandside '>>=' exp 	{StatementExpExp(Assign($1,$3,">>="))}
+			| lefthandside '>>>=' exp 	{StatementExpExp(Assign($1,$3,">>>="))}
+			| lefthandside '&=' exp 		{StatementExpExp(Assign($1,$3,"&="))}
+			| lefthandside '|=' exp 		{StatementExpExp(Assign($1,$3,"|="))}
+			| lefthandside '^=' exp 		{StatementExpExp(Assign($1,$3,"^="))}
 			
 
 unaryexp		: '-' exp %prec UNARY	{Unary("-", $2)}
@@ -363,9 +365,7 @@ referencetype		: qualifiedname		{fst $1}
 			| simplename		{$1}
 
 
-functiontype		: type			{$1}
-			| void			{"void"}
-			
+
 
 			
 
@@ -387,6 +387,4 @@ data StatementOrExp a
 parseError :: [Token] -> a
 parseError t = error (show t)
 
-main = do
-    putStrLn (drawAst(parseJava(alexScanTokens "this.a(3*4);")))
 }
