@@ -67,6 +67,7 @@ import Data.String.Utils
       literal_int		{IntLiteralToken $$ _}	
       stringliteral		{StringLiteralToken $$ _}
       boolliteral		{BooleanLiteralToken $$ _}
+      charliteral		{CharLiteralToken $$ _}
       if 			{IfToken _}
       else 			{ElseToken _}
       return 			{ReturnToken _}
@@ -367,8 +368,8 @@ exclusiveorexpression : andexpression {$1}
 		 | exclusiveorexpression '^' andexpression {Infix "^" $1 $3}
 
 literal		 : boolliteral {Boolean $1}
-		 | literal_int {Integer (read $1)}
-		 -- | CHARLITERAL { }
+		 | literal_int {Integer $1}
+		 | charliteral {Char $1}
 		 | stringliteral {String $1}
 		 | null {Null}
 

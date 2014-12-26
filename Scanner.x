@@ -1,10 +1,16 @@
 {
 module Scanner (alexScanTokens, Token(..), AlexPosn(..)) where
+import Data.Char
+import Numeric
+import Data.String.Utils
 }
 
 %wrapper "posn"
 
 $digit = 0-9
+$hexdigit = [0-9A-Fa-f]
+$bindigit = [0-1]
+$octaldigit = [0-7]
 $char = [a-zA-Z]
 
 tokens :-
@@ -111,17 +117,34 @@ tokens :-
   ";"					{\p -> \s -> SemicolonToken p }
   ","					{\p -> \s -> CommaToken p }
 
-  $digit+						{\p -> \s -> IntLiteralToken s p}
+  0b(((\_)*$bindigit+(\_)*)+)				{\p -> \s -> IntLiteralToken (binToInt (drop 2 (replace "_" "" s))) p}
+  0x(((\_)*$hexdigit+(\_)*)+)				{\p -> \s -> IntLiteralToken (fst(head(readHex (drop 2 (replace "_" "" s))))) p}
+  0(((\_)*$octaldigit+(\_)*)+)				{\p -> \s -> IntLiteralToken (fst(head(readOct (drop 1 (replace "_" "" s))))) p}
+  ((\_)*$digit+(\_)*)+					{\p -> \s -> IntLiteralToken (read (replace "_" "" s)) p}
+  
   [$char \_] [$char $digit \_]*				{\p -> \s -> IdentifierToken s p }
-  \" [^\"\n]* \"					{\p -> \s -> StringLiteralToken s p }
-  \' [^\'\n] \'						{\p -> \s -> CharLiteralToken s p }
-  \' \\[^\'\n] \'					{\p -> \s -> CharLiteralToken s p }
+  \" (((\\\")?|(\\t)?|(\\b)?|(\\n)?|(\\r)?|(\\f)?|(\\0)?|(\\\')?|(\\\\)?|(\\u$hexdigit$hexdigit$hexdigit$hexdigit))*[^\\\"\n\r\f\'\b\t]?((\\\")?|(\\t)?|(\\b)?|(\\n)?|(\\r)?|(\\f)?|(\\\')?|(\\0)?|(\\\\)?|(\\u$hexdigit$hexdigit$hexdigit$hexdigit))*)* \"					{\p -> \s -> StringLiteralToken (resolveEscapeSequences ((take ((length s)-2) (drop 1 s)),0,"")) p }
+  \' [^\\\"\n\r\f\'\b\t] \'				{\p -> \s -> CharLiteralToken (s !! 1) p }
+  \' \\\' \'						{\p -> \s -> CharLiteralToken '\'' p }
+  \' \\\" \'						{\p -> \s -> CharLiteralToken '\"' p }
+  \' \\\\ \'						{\p -> \s -> CharLiteralToken '\\' p }
+  \' \\n \'						{\p -> \s -> CharLiteralToken '\n' p }
+  \' \\r \'						{\p -> \s -> CharLiteralToken '\r' p }
+  \' \\t \'						{\p -> \s -> CharLiteralToken '\t' p }
+  \' \\b \'						{\p -> \s -> CharLiteralToken '\b' p }
+  \' \\f \'						{\p -> \s -> CharLiteralToken '\f' p }
+  \' \\0 \'						{\p -> \s -> CharLiteralToken '\0' p }
+  \' \\u$hexdigit$hexdigit$hexdigit$hexdigit \'		{\p -> \s -> CharLiteralToken  (chr (fst(head (readHex (take 4 (drop 3 s)))))) p }
+  
   
   -- Java Operators
   
   $white+				;
   [0-9] ([A-Za-z\_])+			{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is not a lexem! Identifiers can't start with digits.")
 						      ErrorToken}
+						      
+  
+  
   .					{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is a forbidden character.")
 						      ErrorToken}
   
@@ -227,9 +250,9 @@ data Token =
     RightParenthesisToken AlexPosn		|
     LeftBracesToken AlexPosn			|
     RightBracesToken AlexPosn			|
-    CharLiteralToken String AlexPosn		|
+    CharLiteralToken Char AlexPosn		|
     StringLiteralToken String AlexPosn		|
-    IntLiteralToken String AlexPosn		|
+    IntLiteralToken Int AlexPosn		|
     FloatLiteralToken AlexPosn			|
     BooleanLiteralToken Bool AlexPosn		|
     NullToken AlexPosn				|
@@ -238,6 +261,39 @@ data Token =
     deriving (Eq, Show)
 
 
+resolveEscapeSequences :: ([Char], Int, String) -> [Char]
+resolveEscapeSequences ([], state, temp) = if (state == 0) then [] else (error "Falsche Escape-Sequence")
+resolveEscapeSequences (c:cs, state, temp) = 	if (state == 0 && c /= '\\') then ([c] ++ (resolveEscapeSequences (cs, 0, ""))) 
+					else if (state == 0 && c == '\\') then (resolveEscapeSequences (cs,1,""))
+					else if (state == 1 && c == 'n') then ("\n" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == 'r') then ("\r" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == 't') then ("\t" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == 'f') then ("\f" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == 'b') then ("\b" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == '\'') then ("\'" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == '\"') then ("\"" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == '\\') then ("\\" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == '\0') then ("\0" ++ (resolveEscapeSequences (cs,0,""))) 
+					else if (state == 1 && c == 'u') then (resolveEscapeSequences (cs,2,""))
+					else if (state == 2 && (isHexDigit c)) then (resolveEscapeSequences (cs,3,[c]))
+					else if (state == 3 && (isHexDigit c)) then (resolveEscapeSequences (cs,4,temp ++ [c]))
+					else if (state == 4 && (isHexDigit c)) then (resolveEscapeSequences (cs,5,temp ++ [c]))
+					else if (state == 5 && (isHexDigit c)) then [(chr (fst(head (readHex (temp ++ [c])))))] ++ (resolveEscapeSequences (cs,0,""))
+					else error "Irgendwas lief falsch, das hier sollte man nie sehen können"
+					
+
+					
+binToNum :: Char -> Int
+binToNum '0' = 0
+binToNum '1' = 1
+binToNum _ = -1
+
+binToInt :: [Char] -> Int
+binToInt s = binToInt2 ((reverse s),0)
+
+binToInt2 :: ([Char], Int) -> Int
+binToInt2 (s:ss, e) = (binToNum s) * (2 ^ (e)) + binToInt2(ss, e+1)
+binToInt2 ([], e) = 0
 
 main = do
     print (alexScanTokens "\'c\' true false")

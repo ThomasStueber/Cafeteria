@@ -142,6 +142,8 @@ expToTree (InstanceVar i  name) = Node "Instanz-Variable" [Node ("Name: " ++ nam
 expToTree (Cast t e) = Node "Cast" [Node ("Datentyp: " ++ t) [], Node "Ausdruck" [(expToTree e)]]
 expToTree (TypedExp e t) = Node "Typed-Expression" [Node ("Typ: " ++ t) [], expToTree e]
 expToTree (StatementExpExp(e)) = statementExpToTree e
+expToTree (String(s)) = Node ("String-Literal: " ++ s) []
+expToTree (Char(c)) = Node ("Char-Literal: " ++  [c]) []
 expToTree e@_ = Node (show e) []
 
 
