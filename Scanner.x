@@ -117,10 +117,10 @@ tokens :-
   ";"					{\p -> \s -> SemicolonToken p }
   ","					{\p -> \s -> CommaToken p }
 
-  0b(((\_)*$bindigit+(\_)*)+)				{\p -> \s -> IntLiteralToken (binToInt (drop 2 (replace "_" "" s))) p}
-  0x(((\_)*$hexdigit+(\_)*)+)				{\p -> \s -> IntLiteralToken (fst(head(readHex (drop 2 (replace "_" "" s))))) p}
-  0(((\_)*$octaldigit+(\_)*)+)				{\p -> \s -> IntLiteralToken (fst(head(readOct (drop 1 (replace "_" "" s))))) p}
-  ((\_)*$digit+(\_)*)+					{\p -> \s -> IntLiteralToken (read (replace "_" "" s)) p}
+  (0b$bindigit | 0b(($bindigit+(\_)*)+$bindigit))	{\p -> \s -> IntLiteralToken (binToInt (drop 2 (replace "_" "" s))) p}
+  (0x$hexdigit | 0x(($hexdigit+(\_)*)+$hexdigit))	{\p -> \s -> IntLiteralToken (fst(head(readHex (drop 2 (replace "_" "" s))))) p}
+  (0$octaldigit | 0(($octaldigit+(\_)*)+$octaldigit))	{\p -> \s -> IntLiteralToken (fst(head(readOct (drop 1 (replace "_" "" s))))) p}
+  ($digit | ($digit+(\_)*)+$digit)			{\p -> \s -> IntLiteralToken (read (replace "_" "" s)) p}
   
   [$char \_] [$char $digit \_]*				{\p -> \s -> IdentifierToken s p }
   \" (((\\\")?|(\\t)?|(\\b)?|(\\n)?|(\\r)?|(\\f)?|(\\0)?|(\\\')?|(\\\\)?|(\\u$hexdigit$hexdigit$hexdigit$hexdigit))*[^\\\"\n\r\f\'\b\t]?((\\\")?|(\\t)?|(\\b)?|(\\n)?|(\\r)?|(\\f)?|(\\\')?|(\\0)?|(\\\\)?|(\\u$hexdigit$hexdigit$hexdigit$hexdigit))*)* \"					{\p -> \s -> StringLiteralToken (resolveEscapeSequences ((take ((length s)-2) (drop 1 s)),0,"")) p }

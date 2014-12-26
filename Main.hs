@@ -6,4 +6,4 @@ import Parser
 
 
 main = do
-  putStrLn (drawAst (parseJava(alexScanTokens "public class t {void test () {a = 077; } }")))
+  putStrLn (drawAst (parseJava(alexScanTokens "public class t {void test () {a = 0x123; } }")))
