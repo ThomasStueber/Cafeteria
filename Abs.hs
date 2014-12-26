@@ -67,6 +67,7 @@ data Exp = This
 	  | Null							-- Null
 	  | Cast{casttype :: Typename, castexp :: Exp}			-- Cast
 	  | TypedExp{typedexp :: Exp, exptype :: Typename}
+	  | InstanceOf{instanceOfExp :: Exp, instanceOfType :: Typename}
 	  | ConditionalExp{conditionalCond :: Exp, conditionalIfCase :: Exp, conditionalElseCase :: Exp}
 	  deriving Show
 

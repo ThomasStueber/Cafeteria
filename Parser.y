@@ -3,6 +3,7 @@ module Parser (parseJava) where
 import Scanner
 import Abs
 import Data.Maybe
+import Data.String.Utils
 }
 
 %name parseJava
@@ -98,7 +99,7 @@ name             : qualifiedname {$1}
 
 typedeclaration  : classdeclaration {$1}
 
-qualifiedname    : name  '.' identifier {$1 ++ $3}
+qualifiedname    : name  '.' identifier {$1 ++ "." ++ $3}
 
 simplename       : identifier {$1}
 
@@ -265,8 +266,9 @@ whilestatementnoshortif : while '(' expression  ')'  statementnoshortif {While $
 conditionalorexpression : conditionalandexpression {$1}
 		 | conditionalorexpression '||' conditionalandexpression{Infix "||" $1 $3}
 
-lefthandside     	: name {LocalOrFieldVar $1} --noch falsch
-			| fieldaccess {$1}
+lefthandside     	: fieldaccess {$1}
+			| name {nameToInstanceVar $1}
+			
 
 assignmentoperator : '=' {"="}
 		 | '*=' {"*="}
@@ -309,7 +311,7 @@ unaryexpression	 : preincrementexpression {StatementExpExp $1}
 		 | unaryexpressionnotplusminus {$1}
 
 postfixexpression : primary {$1}
-		 | name {LocalOrFieldVar $1} --noch falsch
+		 | name {nameToInstanceVar $1} --noch falsch
 		 | postincrementexpression {StatementExpExp $1}
 		 | postdecrementexpression{StatementExpExp $1}
 
@@ -339,7 +341,7 @@ literal		 : boolliteral {Boolean $1}
 		 | stringliteral {String $1}
 		 | null {Null}
 
-castexpression	 : '('  primitivetype  ')'  unaryexpression {Cast $2 $4} --noch falsch
+castexpression	 : '('  primitivetype  ')'  unaryexpression {Cast $2 $4}
  		 | '('  expression  ')'  unaryexpressionnotplusminus{LocalOrFieldVar ""} -- noch falsch
 
 andexpression    : equalityexpression {$1}
@@ -354,7 +356,7 @@ relationalexpression : shiftexpression {$1}
 		 | relationalexpression '>' shiftexpression {Infix ">" $1 $3}
 		 | relationalexpression '<=' shiftexpression {Infix "<=" $1 $3}
 		 | relationalexpression '>=' shiftexpression {Infix ">=" $1 $3}
-		 -- | relationalexpression instanceof referencetype {Infix "instanceof" $1 $3}
+		 | relationalexpression instanceof referencetype {InstanceOf $1 $3}
 
 shiftexpression	 	: additiveexpression {$1}
 			| shiftexpression '<<' additiveexpression {Infix "<<" $1 $3}
@@ -374,6 +376,7 @@ multiplicativeexpression : unaryexpression {$1}
 
 {
 
+
 -- Hilfsfunktion für Statements wie "int i, i2, i3"
 varDeclHelper :: (String, [(String, Maybe Exp)]) -> [Statement]
 varDeclHelper (t, []) = []
@@ -383,6 +386,18 @@ varDeclHelper (t, x:xs) = [LocalVarDecl t (fst x) (snd x)] ++ varDeclHelper (t, 
 fieldDeclHelper :: (String, [Modifier], [(String, Maybe Exp)]) -> [MemberField]
 fieldDeclHelper (t, m, []) = []
 fieldDeclHelper (t, m, x:xs) = [MemberField m t (fst x) (snd x)] ++ fieldDeclHelper (t, m, xs)
+
+--Hilfsfunktion, macht aus "a.b.c" InstanceVar(InstanceVar(LocalVarDecl("a"), "b"), "c")
+nameToInstanceVar :: String -> Exp
+nameToInstanceVar s = nameToInstanceVar2 (LocalOrFieldVar ((split "." s) !! 0), drop 1 (split "." s))
+
+nameToInstanceVar2 :: (Exp, [String]) -> Exp
+nameToInstanceVar2 (e, s:ss) = nameToInstanceVar2 ((InstanceVar e s), ss)
+nameToInstanceVar2 (e, []) = e
+
+
+
+
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
