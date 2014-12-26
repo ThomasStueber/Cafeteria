@@ -18,7 +18,7 @@ data Statement = Block{statementlist :: [Statement]}
 	       | Return{returnExpression :: Maybe Exp}           												-- Ausdruck dessen Ergebniss zurück gegeben werden soll
 	       | LocalVarDecl{typename :: Typename, varname :: String, optionalinit :: Maybe Exp}	   					-- Datentyp, Name, Initialisierung
 	       | LocalFinalDecl{typename :: Typename, finalname :: String, initexp :: Exp}	   						-- Datentyp, Name, Initialisierung
-	       | For{initstatement :: Statement, optionalcondition :: Maybe Exp, increment :: Maybe StatementExp, loopbody :: Statement}	-- for(Assign, Exp, Assign), Anweisungen
+	       | For{initstatement :: [Statement], optionalcondition :: Maybe Exp, increment :: [StatementExp], loopbody :: Statement}	-- for(Assign, Exp, Assign), Anweisungen
 	       | Do{loopbody :: Statement, condition :: Exp}											--Anweisungen, Abbruchbedingung
 	       | StatementExpStatement{statementexpstatement :: StatementExp}									-- 
 	       | EmptyStatement
@@ -124,7 +124,7 @@ statementToTree (While e s) = Node "While" [Node "Schleifenkopf" [(expToTree e)]
 statementToTree (If e ib eb) = Node "If" [Node "Bedingung" [(expToTree e)], Node "If-Body" [(statementToTree ib)], if (isJust eb) then (Node "Else" [statementToTree (fromJust eb)]) else (Node "Kein Else-Statement" [])]
 statementToTree (Return(e)) = Node "Return" [if (isJust e) then (Node "Return-Expression" [(expToTree (fromJust e))]) else (Node "Kein Rückgabewert" [])]
 statementToTree (LocalVarDecl t  name ini) = Node "Dekl. lokaler Variable" [Node ("Name: " ++ name) [], Node ("Datentyp: " ++ t) [], if (isJust ini) then (Node "Initialisierung" [expToTree (fromJust ini)]) else (Node "Variable wird nicht initialisiert" [])]
-statementToTree (For init e inc s) = Node "For"  [Node "Initialisierung" [(statementToTree (init))], if (isJust e) then (Node "Abbruchbedingung" [(expToTree (fromJust e))]) else (Node "Keine Abbruchbedingung" []), if (isJust inc) then (Node "Inkrementierung" [(statementExpToTree (fromJust inc))]) else (Node "Keine Inkrementierung" []), Node "Schleifenkörper" [(statementToTree s)]]
+-- statementToTree (For init e inc s) = Node "For"  [Node "Initialisierung" [(statementToTree (init))], if (isJust e) then (Node "Abbruchbedingung" [(expToTree (fromJust e))]) else (Node "Keine Abbruchbedingung" []), if (isJust inc) then (Node "Inkrementierung" [(statementExpToTree (fromJust inc))]) else (Node "Keine Inkrementierung" []), Node "Schleifenkörper" [(statementToTree s)]]
 statementToTree (StatementExpStatement(e)) = statementExpToTree e
 statementToTree s@_ = Node (show s) []
 

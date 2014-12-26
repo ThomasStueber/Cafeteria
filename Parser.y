@@ -143,6 +143,9 @@ methoddeclaration : methodheader methodbody {MemberFunction (fst (snd $1)) (fst 
 
 block            : '{'   '}' {Block []}
 		 | '{'  blockstatements  '}' {Block $2}
+		 
+block_innerloop  : '{'   '}' {Block []}
+		 | '{'  blockstatements_innerloop  '}' {Block $2}
 
 constructordeclarator :  simplename '('  ')'  {($1, [])}
 		 |  simplename '(' formalparameterlist ')'  {($1, $3)}
@@ -168,6 +171,9 @@ methodbody       : block {$1}
 
 blockstatements  : blockstatement {$1}
 		 | blockstatements blockstatement {$1 ++ $2}
+		 
+blockstatements_innerloop  : blockstatement_innerloop {$1}
+		 | blockstatements_innerloop blockstatement_innerloop {$1 ++ $2}
 
 formalparameterlist : formalparameter {[$1]}
 		 | formalparameterlist  ','  formalparameter{$1 ++ [$3]}
@@ -192,6 +198,9 @@ variabledeclarator : variabledeclaratorid {($1, Nothing)}
 		 
 blockstatement	 : localvariabledeclarationstatement {$1}
 		 | statement  {[$1]}
+		 
+blockstatement_innerloop	 : localvariabledeclarationstatement {$1}
+		 | statement_innerloop  {[$1]}
 
 formalparameter  : type variabledeclaratorid {($1, $2)}
 
@@ -210,7 +219,11 @@ statement        : statementwithouttrailingsubstatement{$1}
 		 | ifthenstatement {$1}
 		 | ifthenelsestatement {$1}
 		 | whilestatement {$1}
-				     
+
+statement_innerloop        : statementwithouttrailingsubstatement_innerloop{$1}
+		 | ifthenstatement_innerloop {$1}
+		 | ifthenelsestatement_innerloop {$1}
+		 | whilestatement {$1}
 
 expression       : assignmentexpression {$1}
 
@@ -223,12 +236,23 @@ statementwithouttrailingsubstatement : block {$1}
 		 | emptystatement {$1}
 		 | expressionstatement {StatementExpStatement $1}
 		 | returnstatement {$1}
+		 
+statementwithouttrailingsubstatement_innerloop : break ';'	{Break}
+		 | continue ';' {Continue}
+		 | block_innerloop {$1}
+		 | emptystatement {$1}
+		 | expressionstatement {StatementExpStatement $1}
+		 | returnstatement {$1}
 
 ifthenstatement  : if '(' expression  ')'  statement {If $3 $5 Nothing}
 
 ifthenelsestatement : if '(' expression  ')' statementnoshortif else statement  {If $3 $5 (Just $7)}
 
-whilestatement   : while '(' expression  ')'  statement {While $3 $5}
+ifthenstatement_innerloop  : if '(' expression  ')'  statement_innerloop {If $3 $5 Nothing}
+
+ifthenelsestatement_innerloop : if '(' expression  ')' statementnoshortif_innerloop else statement_innerloop  {If $3 $5 (Just $7)}
+
+whilestatement   : while '(' expression  ')'  statement_innerloop {While $3 $5}
 
 assignmentexpression : conditionalexpression {$1}
 		 |  assignment{StatementExpExp $1}
@@ -244,6 +268,10 @@ statementnoshortif : statementwithouttrailingsubstatement {$1}
 		 | ifthenelsestatementnoshortif {$1}
 		 | whilestatementnoshortif {$1}
 
+statementnoshortif_innerloop : statementwithouttrailingsubstatement_innerloop {$1}
+		 | ifthenelsestatementnoshortif_innerloop {$1}
+		 | whilestatementnoshortif {$1}
+		 
 conditionalexpression : conditionalorexpression {$1}
 		 | conditionalorexpression '?' expression  ':'  conditionalexpression {ConditionalExp $1 $3 $5}
 
@@ -260,8 +288,11 @@ statementexpression : assignment {$1}
 
 ifthenelsestatementnoshortif :if '(' expression  ')'  statementnoshortif
 			      else statementnoshortif  {If $3 $5 (Just $7)}
+			      
+ifthenelsestatementnoshortif_innerloop :if '(' expression  ')'  statementnoshortif_innerloop
+			      else statementnoshortif_innerloop  {If $3 $5 (Just $7)}
 
-whilestatementnoshortif : while '(' expression  ')'  statementnoshortif {While $3 $5}
+whilestatementnoshortif : while '(' expression  ')'  statementnoshortif_innerloop {While $3 $5}
 
 conditionalorexpression : conditionalandexpression {$1}
 		 | conditionalorexpression '||' conditionalandexpression{Infix "||" $1 $3}
@@ -342,7 +373,7 @@ literal		 : boolliteral {Boolean $1}
 		 | null {Null}
 
 castexpression	 : '('  primitivetype  ')'  unaryexpression {Cast $2 $4}
- 		 | '('  expression  ')'  unaryexpressionnotplusminus{LocalOrFieldVar ""} -- noch falsch
+ 		 | '('  expression  ')'  unaryexpressionnotplusminus{Cast (expToName $2) $4} -- noch falsch
 
 andexpression    : equalityexpression {$1}
 		 | andexpression '&' equalityexpression {Infix "&" $1 $3}
@@ -395,7 +426,10 @@ nameToInstanceVar2 :: (Exp, [String]) -> Exp
 nameToInstanceVar2 (e, s:ss) = nameToInstanceVar2 ((InstanceVar e s), ss)
 nameToInstanceVar2 (e, []) = e
 
-
+expToName :: Exp -> String 
+expToName (InstanceVar i n) = (expToName i) ++ "." ++ n
+expToName (LocalOrFieldVar n) = n
+expToName _ = error ""
 
 
 
