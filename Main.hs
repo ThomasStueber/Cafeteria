@@ -1,12 +1,9 @@
-module Main (main, parseJava) where
-import System.Environment
+module Main (main) where
 import Scanner
 import Abs
 import Parser
 
+
+
 main = do
-  [arg] <- getArgs
-  src <- readFile arg
-  putStrLn (drawAst(parseJava(alexScanTokens src)))
-  -- putStrLn (drawAst(parseJava(alexScanTokens "public class t {void test () {
-  -- for(;;) {int a = 5;} }}")))
+  putStrLn (drawAst (parseJava(alexScanTokens "public class t {void test () {this.a.b = 3;}}")))

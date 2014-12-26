@@ -6,12 +6,9 @@ import Data.Maybe
 }
 
 %name parseJava
-%tokentype {Token}
-%error {parseError}
-
-
--- 2 shift/reduce Konflikt durch if-else Konstrukt, kein Problem da shift gewünschte Operation ist
--- 2 shift/reduce Konflikt durch verschiedene Casts
+%tokentype { Token }
+%error { parseError }
+  
 %token
       class			{ClassToken _}
       '{' 			{LeftBracesToken _}
@@ -82,328 +79,312 @@ import Data.Maybe
       continue 			{ContinueToken _}
       switch 			{SwitchToken _}
       case 			{CaseToken _}
+      instanceof 		{InstanceOfToken _}
+      static 			{StaticToken _}
+      protected 		{ProtectedToken _}
+      abstract	 		{AbstractToken _}
+      '?'	 		{ConditionalQuestionmarkToken _}
       
-      
-      
-      
-%right '=' '+=' '-=' '*=' '/=' '%=' '<<=' '>>=' '>>>=' '^=' '|=' '&='
-%left '||'
-%left '&&'      
-%left '|'
-%left '^'
-%left '&'
-%left '==' '!='
-%left '>=' '<=' '>' '<'
-%left '>>' '<<' '>>>' 
-%left '+' '-'
-%left '*' '/' '%'
-%right UNARY '!' '~' '++' '--' CAST NEW
-%left '[' ']' '(' ')' '.'
-      
+
 %%
-classdef 		: class identifier classbody			{ ClassDef $2 [] [] [] [] }
-			| modifiers class identifier classbody		{ ClassDef $3 $1 (fst $4) [] []}
 
-			
-classbody 		: '{' classbodyelements '}'		{$2}
-			| '{' '}'				{([],[])}
+compilationunit  : typedeclarations { $1 }
 
+typedeclarations : typedeclaration {[$1]}
+		 | typedeclarations typedeclaration {$1 ++ [$2]}
 
-classbodyelements 	: classbodyelements classbodyelement	
-			{
-			case $2 of 
-					Field f -> (fst $1, (snd $1) ++ [f])
-					Function f -> ((fst $1) ++ [f],snd $1)
-			} 
-			| classbodyelement			
-			{
-			case $1 of 
-					Field f -> ([],[f])
-					Function f -> ([f],[])
-			}
+name             : qualifiedname {$1}
+		 | simplename {$1}
 
+typedeclaration  : classdeclaration {$1}
 
-classbodyelement 	: functiondecl  {Function $1}
-			| fielddecl  {Field $1}
-			
-fielddecl		: type identifier ';' 				{MemberField [] $1 $2 Nothing}
-			| modifiers type identifier ';' 		{MemberField $1 $2 $3 Nothing}
-			| type identifier '=' exp ';' 			{MemberField [] $1 $2 (Just $4)}
-			| modifiers type identifier '=' exp ';' 	{MemberField $1 $2 $3 (Just $5)}
-			
-			
-			
-functiondecl		: functionhead statement			{MemberFunction (fst $1) (fst (snd $1)) (fst (snd (snd $1))) (snd (snd (snd $1))) $2}
+qualifiedname    : name  '.' identifier {$1 ++ $3}
 
-functionhead		: type identifier functionparameters		{($1,($2,($3,[])))}
-			| modifiers type identifier functionparameters	{($2,($3,($4,$1)))}
-			| void identifier functionparameters		{("void",($2,($3,[])))}
-			| modifiers void identifier functionparameters	{("void",($3,($4,$1)))}
-			
+simplename       : identifier {$1}
 
-functionparameters	: '(' formalparameters ')'			{$2}
-			| '(' ')'					{[]}
+classdeclaration : class identifier classbody {ClassDef $2 [] (snd (snd $3)) (fst (snd $3)) (fst $3)}
+                 | modifiers class identifier classbody {ClassDef $3 $1 (snd (snd $4)) (fst (snd $4)) (fst $4)}
 
-formalparameters	: formalparameters ',' formalparameter		{$1 ++ [$3]}
-			| formalparameter				{[$1]}
-			
-formalparameter		: type identifier				{($1, $2)}
-			
-modifiers 		: modifiers modifier 				{$1 ++ [$2]}
-			| modifier					{[$1]}
+classbody        : '{' '}'  { ([], ([],[])) }
+		 | '{' classbodydeclarations  '}' { $2 }
 
-			
-modifier		: public 					{Public}
-			| private 					{Private}
+modifiers        : modifier {[$1]}
+		 | modifiers modifier		 {$1 ++ [$2]}
 
-statement		: type identifier ';'								{LocalVarDecl $1 $2 Nothing}
-			| return exp ';' 								{Return $2}
-			| if '(' exp ')' statement							{If $3 $5 Nothing}
-			| if '(' exp ')' statement else statement					{If $3 $5 (Just $7)}
-			| '{' statements '}'								{Block $2}
-			| '{' '}'									{Block []}
-			| type identifier '=' exp ';'							{LocalVarDecl $1 $2 (Just $4)}
-			| final type identifier '=' exp ';'						{LocalFinalDecl $2 $3 $5}
-			| while '(' exp ')' insideloopstatement 					{While $3 $5}
-			| do insideloopstatement while '(' exp ')'					{Do $2 $5}
-			| for '(' forinitstatement exp ';' forincstatement ')' insideloopstatement	{For $3 (Just $4) (Just $6) $8}
-			| for '(' forinitstatement ';' forincstatement ')' insideloopstatement		{For $3 Nothing (Just $5) $7}
-			| for '(' forinitstatement exp ';' ')' insideloopstatement			{For $3 (Just $4) Nothing $7}
-			| for '(' forinitstatement ';' ')' insideloopstatement				{For $3 Nothing Nothing $6}
-			| statementexpstatement								{$1}
-			| ';'										{EmptyStatement}
-			| methodeorinstance ';'				
-			{
-			case $1 of
-					(StatementExpExp(MethodCall e n p)) -> StatementExpStatement(MethodCall e n p)
-					_ -> error "not a statement"
-			}
-			| break ';'					{error "break outside of loop or switch"}
-			| continue ';'					{error "continue outside of loop or switch"}
-			-- | switch '(' exp ')' '{' casestatements '}'	{}
-			
-			
-casestatements		: casestatement					{}
-			| casestatements casestatement			{}
-			
-casestatement		: case simplename ':' insideloopstatements	{}
-			| case intliteral ':' insideloopstatements	{}
-			| case stringliteral ':' insideloopstatements	{}
-			
-			
-			
-insideloopstatement	: type identifier ';'								{LocalVarDecl $1 $2 Nothing}
-			| return exp ';' 								{Return $2}
-			| if '(' exp ')' insideloopstatement						{If $3 $5 Nothing}
-			| if '(' exp ')' insideloopstatement else insideloopstatement			{If $3 $5 (Just $7)}
-			| '{' insideloopstatements '}'							{Block $2}
-			| '{' '}'									{Block []}
-			| type identifier '=' exp ';'							{LocalVarDecl $1 $2 (Just $4)}
-			| final type identifier '=' exp ';'						{LocalFinalDecl $2 $3 $5}
-			| while '(' exp ')' insideloopstatement 					{While $3 $5}
-			| do insideloopstatement while '(' exp ')'					{Do $2 $5}
-			| for '(' forinitstatement exp ';' forincstatement ')' insideloopstatement	{For $3 (Just $4) (Just $6) $8}
-			| for '(' forinitstatement ';' forincstatement ')' insideloopstatement		{For $3 Nothing (Just $5) $7}
-			| for '(' forinitstatement exp ';' ')' insideloopstatement			{For $3 (Just $4) Nothing $7}
-			| for '(' forinitstatement ';' ')' insideloopstatement				{For $3 Nothing Nothing $6}
-			| statementexpstatement								{$1}
-			| ';'						{EmptyStatement}
-			| methodeorinstance ';'				
-			{
-			case $1 of
-					(StatementExpExp(MethodCall e n p)) -> StatementExpStatement(MethodCall e n p)
-					_ -> error "not a statement"
-			}
-			| break ';'					{Break}
-			| continue ';'					{Continue}
-			-- | switch '(' exp ')' '{' casestatements '}'	{}
-			
-			
-forinitstatement	: type identifier '=' exp ';'			{LocalVarDecl $1 $2 (Just $4)}
-			| ';'						{EmptyStatement}
-			| lefthandside '=' exp ';'			{StatementExpStatement(Assign $1 $3  "=")}
-			
-forincstatement		: lefthandside '++'				{(PostfixUnary "++" $1)}
-			| '++' lefthandside				{(PrefixUnary "++" $2)}
-			| lefthandside '--'				{(PostfixUnary "--" $1)}
-			| '--' lefthandside				{(PrefixUnary "--" $2)}
-			| assignmentstatement				{($1)}
-			| methodeorinstance
-			{
-			case $1 of
-					(StatementExpExp(MethodCall e n p)) -> (MethodCall e n p)
-					_ -> error "not a statement"
-			}
-			
-statementexpstatement	: assignmentstatement ';'			{StatementExpStatement($1)}
-			| newstatement ';'				{StatementExpStatement($1)}
-			| lefthandside '++' ';'				{StatementExpStatement(PostfixUnary "++" $1)}
-			| '++' lefthandside ';'				{StatementExpStatement(PrefixUnary "++" $2)}
-			| lefthandside '--' ';'				{StatementExpStatement(PostfixUnary "--" $1)}
-			| '--' lefthandside ';'				{StatementExpStatement(PrefixUnary "--" $2)}
-			
+classbodydeclarations :  classbodydeclaration {$1}
+		 | classbodydeclarations classbodydeclaration{((fst $1) ++ (fst $2) , ((fst (snd $1)) ++ (fst (snd $2)), (snd (snd $1)) ++ (snd (snd $2))))}
 
-			
-			
-			
-			
-newstatement		: new type '(' parameters ')' %prec NEW		{New $2 $4}
-			| new type '(' ')' %prec NEW			{New $2 []}
-			
-parameters		: parameters ',' exp 				{$1 ++ [$3]}
-			| exp						{[$1]}
-			
+modifier         : public {Public}
+		 | protected {Protected}
+                 | private {Private}
+                 | static {Static}
+                 | abstract {Abstract}
+                 | final {Final}
 
-assignmentstatement	: lefthandside '=' exp 		{Assign $1 $3 "="}
-			| lefthandside '+=' exp 	{Assign $1 $3 "+="}
-			| lefthandside '-=' exp 	{Assign $1 $3 "-="}
-			| lefthandside '*=' exp 	{Assign $1 $3 "*="}
-			| lefthandside '/=' exp 	{Assign $1 $3 "/="}
-			| lefthandside '%=' exp 	{Assign $1 $3 "%="}
-			| lefthandside '<<=' exp 	{Assign $1 $3 "<<=" }
-			| lefthandside '>>=' exp 	{Assign $1 $3 ">>=" }
-			| lefthandside '>>>=' exp 	{Assign $1 $3 ">>>=" }
-			| lefthandside '&=' exp 	{Assign $1 $3 "&=" }
-			| lefthandside '|=' exp 	{Assign $1 $3 "|=" }
-			| lefthandside '^=' exp 	{Assign $1 $3 "^=" }
-			
+classtype        : classorinterfacetype{$1}
 
-statements		: statements statement						{$1 ++ [$2]}
-			| statement							{[$1]}
-			
-insideloopstatements		: insideloopstatements insideloopstatement		{$1 ++ [$2]}
-				| insideloopstatement					{[$1]}
-			
-			
-exp 			: infixexp				{$1}
-			| intliteral				{$1}
-			| lefthandside '++'			{StatementExpExp(PostfixUnary "++" $1)}
-			| lefthandside '--'			{StatementExpExp(PostfixUnary "--" $1)}
-			| '++' lefthandside			{StatementExpExp(PrefixUnary "++" $2)}
-			| '--' lefthandside			{StatementExpExp(PrefixUnary "--" $2)}
-			| unaryexp				{$1}
-			| this					{This}
-			| super					{Super}
-			| newstatement 				{StatementExpExp $1}
-			| stringliteral				{String $1}
-			| boolliteral				{Boolean $1}
-			| null					{Null}
-			| '(' qualifiedname ')' exp %prec CAST	{Cast (fst $2) $4}
-			| '(' identifier ')' exp %prec CAST	{Cast $2 $4}
-			| '(' primitivetype ')' exp %prec CAST	{Cast $2 $4}
-			| '(' exp ')'				{$2}
-			| lefthandside				{$1}
+classbodydeclaration : classmemberdeclaration {$1}
+		 | constructordeclaration {([$1], ([],[]))}
 
-lefthandside		: methodeorinstance			{$1}	
-			| qualifiedname				{snd $1}
-			| simplename				{LocalOrFieldVar $1}
-			| '(' lefthandside ')'			{$2}
-			
-			
-			
-			
+classorinterfacetype : name{$1}
 
-methodeorinstance		: identifier '(' parameters ')' 			{StatementExpExp(MethodCall This $1 $3)}
-				| methodeorinstance '.' identifier '(' parameters ')' 	{StatementExpExp(MethodCall $1 $3 $5)}
-				| qualifiedname '(' parameters ')' 			{StatementExpExp(MethodCall (snd $1) "" $3)}
-				| identifier '('  ')' 					{StatementExpExp(MethodCall This $1 [])}
-				| methodeorinstance '.' identifier '('  ')' 		{StatementExpExp(MethodCall $1 $3 [])}
-				| methodeorinstance '.' identifier			{InstanceVar $1 $3}
-				| qualifiedname '('  ')' 				{StatementExpExp(MethodCall (snd $1) "" [])}
-				| this '.' identifier					{InstanceVar This $3}
-				| this '.' identifier '(' ')'				{StatementExpExp(MethodCall This $3 [])}
-				| this '.' identifier '(' parameters ')'		{StatementExpExp(MethodCall This $3 $5)}
-				
-				
-				
-				
-				
-			
-			
-infixexp		: exp '+' exp 			{Infix "+" $1 $3}
-			| exp '*' exp 			{Infix "*" $1 $3}
-			| exp '-' exp 			{Infix "-" $1 $3}
-			| exp '/' exp 			{Infix "/" $1 $3}
-			| exp '%' exp			{Infix "%" $1 $3}
-			| exp '<<' exp			{Infix "<<" $1 $3}
-			| exp '>>' exp			{Infix ">>" $1 $3}
-			| exp '>>>' exp			{Infix ">>>" $1 $3}
-			| exp '&' exp			{Infix "&" $1 $3}
-			| exp '|' exp			{Infix "|" $1 $3}
-			| exp '^' exp			{Infix "^" $1 $3}
-			| exp '&&' exp			{Infix "&&" $1 $3}
-			| exp '||' exp			{Infix "||" $1 $3}
-			| exp '<' exp			{Infix "<" $1 $3}
-			| exp '>' exp			{Infix ">" $1 $3}
-			| exp '>=' exp			{Infix ">=" $1 $3}
-			| exp '<=' exp			{Infix "<=" $1 $3}
-			| exp '==' exp			{Infix "==" $1 $3}
-			| exp '!=' exp			{Infix "!=" $1 $3}
-			| lefthandside '=' exp 		{StatementExpExp(Assign $1 $3 "=")}
-			| lefthandside '+=' exp 	{StatementExpExp(Assign $1 $3 "+=")}
-			| lefthandside '-=' exp 	{StatementExpExp(Assign $1 $3 "-=")}
-			| lefthandside '*=' exp 	{StatementExpExp(Assign $1 $3 "*=")}
-			| lefthandside '/=' exp 	{StatementExpExp(Assign $1 $3 "/=")}
-			| lefthandside '%=' exp 	{StatementExpExp(Assign $1 $3 "%=")}
-			| lefthandside '<<=' exp 	{StatementExpExp(Assign $1 $3 "<<=")}
-			| lefthandside '>>=' exp 	{StatementExpExp(Assign $1 $3 ">>=")}
-			| lefthandside '>>>=' exp 	{StatementExpExp(Assign $1 $3 ">>>=")}
-			| lefthandside '&=' exp 	{StatementExpExp(Assign $1 $3 "&=")}
-			| lefthandside '|=' exp 	{StatementExpExp(Assign $1 $3 "|=")}
-			| lefthandside '^=' exp 	{StatementExpExp(Assign $1 $3 "^=")}
-			
+classmemberdeclaration : fielddeclaration {([], ($1, []))}
+		 | methoddeclaration {([], ([], [$1]))}
 
-unaryexp		: '-' exp %prec UNARY	{Unary "-" $2}
-			| '+' exp %prec UNARY	{Unary "+" $2}
-			| '!' exp %prec UNARY	{Unary "!" $2}
-			| '~' exp %prec UNARY	{Unary "~" $2}
-			
-			
-			
-			
-intliteral		: literal_int			{Integer (read $1)}
+constructordeclaration : constructordeclarator constructorbody {Constructor [] (fst $1) (Block $2) (snd $1)}
+		 |  modifiers constructordeclarator constructorbody 
+		 {Constructor $1 (fst $2) (Block $3) (snd $2)}
 
-simplename		: identifier			{$1}
+fielddeclaration : type variabledeclarators  ';' {fieldDeclHelper ($1, [], $2)}
+ 		 | modifiers type variabledeclarators  ';' {fieldDeclHelper ($2, $1, $3)}
 
-qualifiedname		: identifier '.' identifier	{(($1 ++ "." ++ $3), (InstanceVar (LocalOrFieldVar($1)) $3))}
-			| qualifiedname '.' identifier	{(((fst $1) ++ "." ++ $3), (InstanceVar (snd $1) $3))}
+methoddeclaration : methodheader methodbody {MemberFunction (fst (snd $1)) (fst (snd (snd $1))) (snd (snd (snd $1))) (fst $1) $2}
 
-type 			: primitivetype			{$1}
-			| referencetype			{$1}
-					
-primitivetype		: boolean			{"boolean"}
-			| integer			{"int"}
-			| char 				{"char"}
-					
-referencetype		: qualifiedname			{fst $1}
-			| simplename			{$1}
+block            : '{'   '}' {Block []}
+		 | '{'  blockstatements  '}' {Block $2}
+
+constructordeclarator :  simplename '('  ')'  {($1, [])}
+		 |  simplename '(' formalparameterlist ')'  {($1, $3)}
+
+constructorbody	 : '{' '}' {[]}
+		 | '{' explicitconstructorinvocation  '}' {[$2]}
+		 | '{' blockstatements  '}' {$2}
+		 | '{' explicitconstructorinvocation blockstatements '}' {[$2] ++ $3}
+
+methodheader	 : type methoddeclarator {([], ($1, $2))}
+		 | modifiers type methoddeclarator {($1, ($2, $3))}
+		 | void methoddeclarator {([], ("void", $2))}
+		 | modifiers void methoddeclarator {($1, ("void", $3))}
+
+type             : primitivetype {$1}
+		 | referencetype {$1}
+
+variabledeclarators : variabledeclarator {[$1]}
+		 | variabledeclarators  ','  variabledeclarator {$1 ++ [$3]}
+
+methodbody       : block {$1}
+		 | ';' {EmptyStatement}
+
+blockstatements  : blockstatement {$1}
+		 | blockstatements blockstatement {$1 ++ $2}
+
+formalparameterlist : formalparameter {[$1]}
+		 | formalparameterlist  ','  formalparameter{$1 ++ [$3]}
+
+explicitconstructorinvocation : this '('  ')'   ';'  {ConstructorInvocation []}
+		 | this '(' argumentlist  ')'   ';'  {ConstructorInvocation $3}
+
+classtypelist    : classtype {}
+		 | classtypelist  ','  classtype { }
+
+methoddeclarator : identifier '('  ')'  {($1, [])}
+		 | identifier '(' formalparameterlist  ')'  {($1, $3)}
+
+primitivetype    : boolean {"boolean"}
+		 | numerictype {$1}
+
+referencetype    : classorinterfacetype {$1}
 
 
+variabledeclarator : variabledeclaratorid {($1, Nothing)}
+		 | variabledeclaratorid '=' variableinitializer {($1, Just $3)}
+		 
+blockstatement	 : localvariabledeclarationstatement {$1}
+		 | statement  {[$1]}
 
+formalparameter  : type variabledeclaratorid {($1, $2)}
 
+argumentlist     : expression {[$1]}
+		 | argumentlist  ','  expression {$1 ++ [$3]}
+
+numerictype      : integraltype {$1}
+
+variabledeclaratorid : identifier {$1}
+
+variableinitializer  : expression {$1}
+
+localvariabledeclarationstatement : localvariabledeclaration  ';'  {$1}
+
+statement        : statementwithouttrailingsubstatement{$1}
+		 | ifthenstatement {$1}
+		 | ifthenelsestatement {$1}
+		 | whilestatement {$1}
+				     
+
+expression       : assignmentexpression {$1}
+
+integraltype     : integer  {"int"}
+                 | char {"char"}
+
+localvariabledeclaration : type variabledeclarators {varDeclHelper ($1, $2)}
+
+statementwithouttrailingsubstatement : block {$1}
+		 | emptystatement {$1}
+		 | expressionstatement {StatementExpStatement $1}
+		 | returnstatement {$1}
+
+ifthenstatement  : if '(' expression  ')'  statement {If $3 $5 Nothing}
+
+ifthenelsestatement : if '(' expression  ')' statementnoshortif else statement  {If $3 $5 (Just $7)}
+
+whilestatement   : while '(' expression  ')'  statement {While $3 $5}
+
+assignmentexpression : conditionalexpression {$1}
+		 |  assignment{StatementExpExp $1}
+
+emptystatement	 :  ';'  {EmptyStatement}
+
+expressionstatement : statementexpression  ';' {$1}
+
+returnstatement  : return  ';'  {Return Nothing}
+		 | return expression  ';' {Return (Just $2)}
+
+statementnoshortif : statementwithouttrailingsubstatement {$1}
+		 | ifthenelsestatementnoshortif {$1}
+		 | whilestatementnoshortif {$1}
+
+conditionalexpression : conditionalorexpression {$1}
+		 | conditionalorexpression '?' expression  ':'  conditionalexpression {ConditionalExp $1 $3 $5}
+
+assignment       :lefthandside assignmentoperator assignmentexpression {Assign $1 $3 $2}
+	
+
+statementexpression : assignment {$1}
+		 | preincrementexpression {$1}
+		 | predecrementexpression {$1}
+		 | postincrementexpression {$1}
+		 | postdecrementexpression {$1}
+		 | methodinvocation {$1}
+		 | classinstancecreationexpression {$1}
+
+ifthenelsestatementnoshortif :if '(' expression  ')'  statementnoshortif
+			      else statementnoshortif  {If $3 $5 (Just $7)}
+
+whilestatementnoshortif : while '(' expression  ')'  statementnoshortif {While $3 $5}
+
+conditionalorexpression : conditionalandexpression {$1}
+		 | conditionalorexpression '||' conditionalandexpression{Infix "||" $1 $3}
+
+lefthandside     	: name {LocalOrFieldVar $1} --noch falsch
+			| fieldaccess {$1}
+
+assignmentoperator : '=' {"="}
+		 | '*=' {"*="}
+		 | '/=' {"/="}
+		 | '%=' {"%="}
+		 | '+=' {"+="}
+		 | '-=' {"-="}
+		 | '<<=' {"<<="}
+		 | '>>=' {">>="}
+		 | '>>>=' {">>>="}
+		 | '&=' {"&="}
+		 | '^=' {"^="}
+		 | '|='{"|="}
+
+preincrementexpression : '++' unaryexpression {PostfixUnary "++" $2}
+
+predecrementexpression : '--' unaryexpression {PrefixUnary "--" $2}
+
+postincrementexpression : postfixexpression '++' {PostfixUnary "++" $1}
+
+postdecrementexpression : postfixexpression '--' {PostfixUnary "--" $1}
+
+methodinvocation : name '('   ')'  {MethodCall This $1 []}
+		 | name '(' argumentlist ')' {MethodCall This $1 $3}
+		 | primary  '.' identifier '(' ')'  {MethodCall $1 $3 []}
+		 | primary  '.' identifier '(' argumentlist  ')'  {MethodCall $1 $3 $5}
+     
+classinstancecreationexpression : new classtype '('   ')'  {New $2 []}
+                 | new classtype '('  argumentlist  ')'  {New $2 $4}
+
+conditionalandexpression : inclusiveorexpression {$1}
+		      | conditionalandexpression '&&' inclusiveorexpression{Infix "&&" $1 $3}
+
+fieldaccess      : primary  '.' identifier {InstanceVar $1 $3}
+
+unaryexpression	 : preincrementexpression {StatementExpExp $1}
+		 | predecrementexpression {StatementExpExp $1}
+		 | '+' unaryexpression {Unary "+" $2}
+		 | '-' unaryexpression {Unary "-" $2}
+		 | unaryexpressionnotplusminus {$1}
+
+postfixexpression : primary {$1}
+		 | name {LocalOrFieldVar $1} --noch falsch
+		 | postincrementexpression {StatementExpExp $1}
+		 | postdecrementexpression{StatementExpExp $1}
+
+primary		 : primarynonewarray {$1}
+
+inclusiveorexpression : exclusiveorexpression {$1}
+		 | inclusiveorexpression '|' exclusiveorexpression {Infix "|" $1 $3}
+
+primarynonewarray : literal {$1}
+		 | this {This}
+		 | '(' expression ')'  {$2}
+                 | classinstancecreationexpression {StatementExpExp $1}
+		 | fieldaccess {$1}
+		 | methodinvocation {StatementExpExp $1}
+
+unaryexpressionnotplusminus : postfixexpression {$1}
+	         | '~' unaryexpression {Unary "~" $2}
+		 | '!' unaryexpression {Unary "!" $2}
+		 | castexpression{$1}
+
+exclusiveorexpression : andexpression {$1}
+		 | exclusiveorexpression '^' andexpression {Infix "^" $1 $3}
+
+literal		 : boolliteral {Boolean $1}
+		 | literal_int {Integer (read $1)}
+		 -- | CHARLITERAL { }
+		 | stringliteral {String $1}
+		 | null {Null}
+
+castexpression	 : '('  primitivetype  ')'  unaryexpression {Cast $2 $4} --noch falsch
+ 		 | '('  expression  ')'  unaryexpressionnotplusminus{LocalOrFieldVar ""} -- noch falsch
+
+andexpression    : equalityexpression {$1}
+		 | andexpression '&' equalityexpression {Infix "&" $1 $3}
+
+equalityexpression : relationalexpression {$1}
+		 | equalityexpression '==' relationalexpression {Infix "==" $1 $3}
+		 | equalityexpression '!=' relationalexpression {Infix "!=" $1 $3}
+
+relationalexpression : shiftexpression {$1}
+		 | relationalexpression '<' shiftexpression {Infix "<" $1 $3}
+		 | relationalexpression '>' shiftexpression {Infix ">" $1 $3}
+		 | relationalexpression '<=' shiftexpression {Infix "<=" $1 $3}
+		 | relationalexpression '>=' shiftexpression {Infix ">=" $1 $3}
+		 -- | relationalexpression instanceof referencetype {Infix "instanceof" $1 $3}
+
+shiftexpression	 	: additiveexpression {$1}
+			| shiftexpression '<<' additiveexpression {Infix "<<" $1 $3}
+			| shiftexpression '>>' additiveexpression {Infix ">>" $1 $3}
+			| shiftexpression '>>>' additiveexpression {Infix ">>>" $1 $3}
 			
 
+additiveexpression : multiplicativeexpression {$1}
+		 | additiveexpression '+' multiplicativeexpression {Infix "+" $1 $3}
+		 | additiveexpression '-' multiplicativeexpression {Infix "-" $1 $3}
+
+multiplicativeexpression : unaryexpression {$1}
+		 | multiplicativeexpression '*' unaryexpression {Infix "*" $1 $3}
+		 | multiplicativeexpression '/' unaryexpression {Infix "/" $1 $3}
+		 | multiplicativeexpression '%' unaryexpression {Infix "%" $1 $3}
 
 
 {
 
-data ClassElement 
-	= Field MemberField
-	| Function MemberFunction
+-- Hilfsfunktion für Statements wie "int i, i2, i3"
+varDeclHelper :: (String, [(String, Maybe Exp)]) -> [Statement]
+varDeclHelper (t, []) = []
+varDeclHelper (t, x:xs) = [LocalVarDecl t (fst x) (snd x)] ++ varDeclHelper (t, xs)
 
-data StatementOrExp a
-	= Statement a
-	| Exp a
-
-
-	
-isLegalLeftHandSide :: Exp -> Bool
-isLegalLeftHandSide (InstanceVar _ _) = True 
-isLegalLeftHandSide (LocalOrFieldVar _) = True
-isLegalLeftHandSide _ = False
-
+-- Hilfsfunktion für Felddeklerationen wie "int i, i2, i3"
+fieldDeclHelper :: (String, [Modifier], [(String, Maybe Exp)]) -> [MemberField]
+fieldDeclHelper (t, m, []) = []
+fieldDeclHelper (t, m, x:xs) = [MemberField m t (fst x) (snd x)] ++ fieldDeclHelper (t, m, xs)
 
 parseError :: [Token] -> a
-parseError t = error (show t)
+parseError _ = error "Parse error"
 
 }
