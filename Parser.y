@@ -4,6 +4,8 @@ import Scanner
 import Abs
 import Data.Maybe
 import Data.String.Utils
+import Data.Bits
+import Data.Word
 }
 
 %name parseJava
@@ -220,12 +222,12 @@ statement        : statementwithouttrailingsubstatement{$1}
 		 | ifthenstatement {$1}
 		 | ifthenelsestatement {$1}
 		 | whilestatement {$1}
-
+		 
 statement_innerloop        : statementwithouttrailingsubstatement_innerloop{$1}
 		 | ifthenstatement_innerloop {$1}
 		 | ifthenelsestatement_innerloop {$1}
 		 | whilestatement {$1}
-
+		 
 expression       : assignmentexpression {$1}
 
 integraltype     : integer  {"int"}
@@ -237,13 +239,18 @@ statementwithouttrailingsubstatement : block {$1}
 		 | emptystatement {$1}
 		 | expressionstatement {StatementExpStatement $1}
 		 | returnstatement {$1}
+		 | dowhilestatement {$1}
+
 		 
-statementwithouttrailingsubstatement_innerloop : break ';'	{Break}
-		 | continue ';' {Continue}
+statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
+		 | break identifier ';' {Break (Just $2)}
+		 | continue ';' {Continue Nothing}
+		 | continue identifier ';' {Continue (Just $2)}
 		 | block_innerloop {$1}
 		 | emptystatement {$1}
 		 | expressionstatement {StatementExpStatement $1}
 		 | returnstatement {$1}
+		 | dowhilestatement {$1}
 
 ifthenstatement  : if '(' expression  ')'  statement {If $3 $5 Nothing}
 
@@ -254,6 +261,9 @@ ifthenstatement_innerloop  : if '(' expression  ')'  statement_innerloop {If $3 
 ifthenelsestatement_innerloop : if '(' expression  ')' statementnoshortif_innerloop else statement_innerloop  {If $3 $5 (Just $7)}
 
 whilestatement   : while '(' expression  ')'  statement_innerloop {While $3 $5}
+
+dowhilestatement   : do statement_innerloop while '(' expression  ')' {Do $2 $5}
+
 
 assignmentexpression : conditionalexpression {$1}
 		 |  assignment{StatementExpExp $1}
@@ -295,8 +305,17 @@ ifthenelsestatementnoshortif_innerloop :if '(' expression  ')'  statementnoshort
 
 whilestatementnoshortif : while '(' expression  ')'  statementnoshortif_innerloop {While $3 $5}
 
+
+
 conditionalorexpression : conditionalandexpression {$1}
-		 | conditionalorexpression '||' conditionalandexpression{Infix "||" $1 $3}
+		 | conditionalorexpression '||' conditionalandexpression
+		 {
+		 case $1 of 
+			(Boolean l) -> case $3 of 
+					      (Boolean r) -> (Boolean (l || r))
+					      _ -> Infix "||" $1 $3
+			_ -> Infix "||" $1 $3
+		}
 
 lefthandside     	: fieldaccess {$1}
 			| name {nameToInstanceVar $1}
@@ -332,14 +351,31 @@ classinstancecreationexpression : new classtype '('   ')'  {New $2 []}
                  | new classtype '('  argumentlist  ')'  {New $2 $4}
 
 conditionalandexpression : inclusiveorexpression {$1}
-		      | conditionalandexpression '&&' inclusiveorexpression{Infix "&&" $1 $3}
+		      | conditionalandexpression '&&' inclusiveorexpression 
+		      {
+		      case $1 of 
+			    (Boolean l) -> case $3 of 
+						  (Boolean r) -> (Boolean (l && r))
+						  _ -> Infix "&&" $1 $3
+			    _ -> Infix "&&" $1 $3
+		      }
 
 fieldaccess      : primary  '.' identifier {InstanceVar $1 $3}
 
 unaryexpression	 : preincrementexpression {StatementExpExp $1}
 		 | predecrementexpression {StatementExpExp $1}
-		 | '+' unaryexpression {Unary "+" $2}
-		 | '-' unaryexpression {Unary "-" $2}
+		 | '+' unaryexpression 
+		 {
+		  case $2 of 
+			(Integer r) -> (Integer r)
+			_ -> Unary "+" $2
+		 }
+		 | '-' unaryexpression 
+		 {
+		  case $2 of 
+			(Integer r) -> (Integer (-r))
+			_ -> Unary "-" $2
+		 }
 		 | unaryexpressionnotplusminus {$1}
 
 postfixexpression : primary {$1}
@@ -350,22 +386,51 @@ postfixexpression : primary {$1}
 primary		 : primarynonewarray {$1}
 
 inclusiveorexpression : exclusiveorexpression {$1}
-		 | inclusiveorexpression '|' exclusiveorexpression {Infix "|" $1 $3}
+		 | inclusiveorexpression '|' exclusiveorexpression 
+		 {
+		  case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer ((.|.) l r))
+					      _ -> Infix "|" $1 $3
+			_ -> Infix "|" $1 $3
+		 }
 
 primarynonewarray : literal {$1}
 		 | this {This}
-		 | '(' expression ')'  {$2}
+		 | '(' expression ')'  
+		 {
+		  case $2 of 
+			(Integer m) -> (Integer m)
+			_ -> $2
+		 }
                  | classinstancecreationexpression {StatementExpExp $1}
 		 | fieldaccess {$1}
 		 | methodinvocation {StatementExpExp $1}
 
 unaryexpressionnotplusminus : postfixexpression {$1}
-	         | '~' unaryexpression {Unary "~" $2}
-		 | '!' unaryexpression {Unary "!" $2}
+	         | '~' unaryexpression 
+		 {
+		  case $2 of 
+			(Integer r) -> (Integer (complement r))
+			_ -> Unary "~" $2
+		 }
+		 | '!' unaryexpression 
+		 {
+		  case $2 of 
+			(Boolean r) -> (Boolean (not r))
+			_ -> Unary "!" $2
+		 }
 		 | castexpression{$1}
 
 exclusiveorexpression : andexpression {$1}
-		 | exclusiveorexpression '^' andexpression {Infix "^" $1 $3}
+		 | exclusiveorexpression '^' andexpression 
+		 {
+		  case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer (xor l r))
+					      _ -> Infix "^" $1 $3
+			_ -> Infix "^" $1 $3
+		 }
 
 literal		 : boolliteral {Boolean $1}
 		 | literal_int {Integer $1}
@@ -373,37 +438,159 @@ literal		 : boolliteral {Boolean $1}
 		 | stringliteral {String $1}
 		 | null {Null}
 
-castexpression	 : '('  primitivetype  ')'  unaryexpression {Cast $2 $4}
+castexpression	 : '('  primitivetype  ')'  unaryexpression 
+		 {
+		  case $2 of 
+			"int" -> case $4 of 
+					      (Integer r) -> (Integer r)
+					      _ -> Cast $2 $4
+			_ -> Cast $2 $4
+		 }
  		 | '('  expression  ')'  unaryexpressionnotplusminus{Cast (expToName $2) $4} -- noch falsch
 
 andexpression    : equalityexpression {$1}
-		 | andexpression '&' equalityexpression {Infix "&" $1 $3}
+		 | andexpression '&' equalityexpression 
+		 {
+		  case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer ((.&.) l r))
+					      _ -> Infix "&" $1 $3
+			_ -> Infix "&" $1 $3
+		 }
 
 equalityexpression : relationalexpression {$1}
-		 | equalityexpression '==' relationalexpression {Infix "==" $1 $3}
-		 | equalityexpression '!=' relationalexpression {Infix "!=" $1 $3}
+		 | equalityexpression '==' relationalexpression {
+		case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Boolean (l == r))
+					      _ -> Infix "==" $1 $3
+			(Boolean l) -> case $3 of 
+					      (Boolean r) -> (Boolean (l == r))
+					      _ -> Infix "==" $1 $3
+			_ -> Infix "==" $1 $3
+		}
+		 | equalityexpression '!=' relationalexpression 
+		{
+		case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Boolean (l /= r)) 
+					      _ -> Infix "!=" $1 $3
+			(Boolean l) -> case $3 of 
+					      (Boolean r) -> (Boolean (l /= r))
+					      _ -> Infix "!=" $1 $3
+			_ -> Infix "!=" $1 $3
+		}
 
 relationalexpression : shiftexpression {$1}
-		 | relationalexpression '<' shiftexpression {Infix "<" $1 $3}
-		 | relationalexpression '>' shiftexpression {Infix ">" $1 $3}
-		 | relationalexpression '<=' shiftexpression {Infix "<=" $1 $3}
-		 | relationalexpression '>=' shiftexpression {Infix ">=" $1 $3}
+		 | relationalexpression '<' shiftexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Boolean (l < r))
+					      _ -> Infix "<" $1 $3
+			_ -> Infix "<" $1 $3
+		 }
+		 | relationalexpression '>' shiftexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Boolean (l > r))
+					      _ -> Infix ">" $1 $3
+			_ -> Infix ">" $1 $3
+		 }
+		 | relationalexpression '<=' shiftexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Boolean (l <= r))
+					      _ -> Infix "<=" $1 $3
+			_ -> Infix "<=" $1 $3
+		 }
+		 | relationalexpression '>=' shiftexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Boolean (l >= r))
+					      _ -> Infix ">=" $1 $3
+			_ -> Infix ">=" $1 $3
+		 }
 		 | relationalexpression instanceof referencetype {InstanceOf $1 $3}
 
 shiftexpression	 	: additiveexpression {$1}
-			| shiftexpression '<<' additiveexpression {Infix "<<" $1 $3}
-			| shiftexpression '>>' additiveexpression {Infix ">>" $1 $3}
-			| shiftexpression '>>>' additiveexpression {Infix ">>>" $1 $3}
+			| shiftexpression '<<' additiveexpression 
+			{
+			case $1 of 
+				(Integer l) -> case $3 of 
+						      (Integer r) -> (Integer (shiftL l (mod r 32))) --testen!
+						      _ -> Infix "<<" $1 $3
+				_ -> Infix "<<" $1 $3
+			}
+			| shiftexpression '>>' additiveexpression 
+			{
+			case $1 of 
+				(Integer l) -> case $3 of 
+						      (Integer r) -> (Integer (shiftR l (mod r 32))) --testen!
+						      _ -> Infix ">>" $1 $3
+				_ -> Infix ">>" $1 $3
+			}
+			| shiftexpression '>>>' additiveexpression 
+			{
+			case $1 of 
+				(Integer l) -> case $3 of 
+						      (Integer r) -> if (r == 0) then (Integer r) else (Integer ((shiftR (fromIntegral l) (mod r 32)))) --testen ob sich dies wirklich gleich verhält wie in java
+						      _ -> Infix ">>>" $1 $3
+				_ -> Infix ">>>" $1 $3
+			}
 			
 
 additiveexpression : multiplicativeexpression {$1}
-		 | additiveexpression '+' multiplicativeexpression {Infix "+" $1 $3}
-		 | additiveexpression '-' multiplicativeexpression {Infix "-" $1 $3}
+		 | additiveexpression '+' multiplicativeexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer (l+r))
+					      (String r) -> (String ((show l) ++ r))
+					      _ -> Infix "+" $1 $3
+			(String l) -> case $3 of
+					      (String r) -> (String (l++r))
+					      (Integer r) -> (String (l ++ (show r)))
+					      _ -> Infix "+" $1 $3
+			_ -> Infix "+" $1 $3
+		 }
+		 | additiveexpression '-' multiplicativeexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer (l-r))
+					      _ -> Infix "-" $1 $3
+			_ -> Infix "-" $1 $3
+		 }
 
 multiplicativeexpression : unaryexpression {$1}
-		 | multiplicativeexpression '*' unaryexpression {Infix "*" $1 $3}
-		 | multiplicativeexpression '/' unaryexpression {Infix "/" $1 $3}
-		 | multiplicativeexpression '%' unaryexpression {Infix "%" $1 $3}
+		 | multiplicativeexpression '*' unaryexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer (l*r))
+					      _ -> Infix "*" $1 $3
+			_ -> Infix "*" $1 $3
+		 }
+		 | multiplicativeexpression '/' unaryexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer (div l r))
+					      _ -> Infix "/" $1 $3
+			_ -> Infix "/" $1 $3
+		 }
+		 | multiplicativeexpression '%' unaryexpression 
+		 {
+		 case $1 of 
+			(Integer l) -> case $3 of 
+					      (Integer r) -> (Integer (mod l r))
+					      _ -> Infix "%" $1 $3
+			_ -> Infix "%" $1 $3
+		 }
 
 
 {
@@ -419,7 +606,7 @@ fieldDeclHelper :: (String, [Modifier], [(String, Maybe Exp)]) -> [MemberField]
 fieldDeclHelper (t, m, []) = []
 fieldDeclHelper (t, m, x:xs) = [MemberField m t (fst x) (snd x)] ++ fieldDeclHelper (t, m, xs)
 
---Hilfsfunktion, macht aus "a.b.c" InstanceVar(InstanceVar(LocalVarDecl("a"), "b"), "c")
+--Hilfsfunktion, macht aus "a.b.c" InstanceVar(InstanceVar(LocalOrFieldVar("a"), "b"), "c")
 nameToInstanceVar :: String -> Exp
 nameToInstanceVar s = nameToInstanceVar2 (LocalOrFieldVar ((split "." s) !! 0), drop 1 (split "." s))
 
