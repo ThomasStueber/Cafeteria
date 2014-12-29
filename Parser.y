@@ -284,7 +284,21 @@ statementnoshortif_innerloop : statementwithouttrailingsubstatement_innerloop {$
 		 | whilestatementnoshortif {$1}
 		 
 conditionalexpression : conditionalorexpression {$1}
-		 | conditionalorexpression '?' expression  ':'  conditionalexpression {ConditionalExp $1 $3 $5}
+		 | conditionalorexpression '?' expression  ':'  conditionalexpression 
+		 {
+		 case $1 of 
+			(Boolean true) -> case $3 of 
+					      (Integer r) -> (Integer r)
+					      (Boolean r) -> (Boolean r)
+					      (String r) -> (String r)
+					      _ -> ConditionalExp $1 $3 $5
+			(Boolean false) -> case $5 of 
+					      (Integer r) -> (Integer r)
+					      (Boolean r) -> (Boolean r)
+					      (String r) -> (String r)
+					      _ -> ConditionalExp $1 $3 $5
+			_ -> ConditionalExp $1 $3 $5
+		}
 
 assignment       :lefthandside assignmentoperator assignmentexpression {Assign $1 $3 $2}
 	

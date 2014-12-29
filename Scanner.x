@@ -140,6 +140,9 @@ tokens :-
   -- Java Operators
   
   $white+				;
+  "//".*				;
+  "/*"([\n]|.)*"*/"			;
+  
   [0-9] ([A-Za-z\_])+			{\p -> \s -> error ("Error in line " ++ (show (getLineFromPosn p)) ++ " (Lexer): " ++ s ++ " is not a lexem! Identifiers can't start with digits.")
 						      ErrorToken}
 						      
