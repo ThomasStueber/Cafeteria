@@ -87,6 +87,7 @@ import Data.Word
       static 			{StaticToken _}
       protected 		{ProtectedToken _}
       abstract	 		{AbstractToken _}
+      assert 			{AssertToken _}
       '?'	 		{ConditionalQuestionmarkToken _}
       
 
@@ -222,24 +223,28 @@ statement        : statementwithouttrailingsubstatement{$1}
 		 | ifthenstatement {$1}
 		 | ifthenelsestatement {$1}
 		 | whilestatement {$1}
+		 | forstatement {$1}
 		 
 statement_innerloop        : statementwithouttrailingsubstatement_innerloop{$1}
 		 | ifthenstatement_innerloop {$1}
 		 | ifthenelsestatement_innerloop {$1}
 		 | whilestatement {$1}
+		 | forstatement {$1}
 		 
 expression       : assignmentexpression {$1}
 
 integraltype     : integer  {"int"}
                  | char {"char"}
 
-localvariabledeclaration : type variabledeclarators {varDeclHelper ($1, $2)}
+localvariabledeclaration : type variabledeclarators {varDeclHelper ($1, False, $2)}
+			 | final type variabledeclarators {varDeclHelper ($2, True, $3)}
 
 statementwithouttrailingsubstatement : block {$1}
 		 | emptystatement {$1}
 		 | expressionstatement {StatementExpStatement $1}
 		 | returnstatement {$1}
 		 | dowhilestatement {$1}
+		 | assertstatement {$1}
 
 		 
 statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
@@ -251,6 +256,7 @@ statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
 		 | expressionstatement {StatementExpStatement $1}
 		 | returnstatement {$1}
 		 | dowhilestatement {$1}
+		 | assertstatement {$1}
 
 ifthenstatement  : if '(' expression  ')'  statement {If $3 $5 Nothing}
 
@@ -264,11 +270,28 @@ whilestatement   : while '(' expression  ')'  statement_innerloop {While $3 $5}
 
 dowhilestatement   : do statement_innerloop while '(' expression  ')' {Do $2 $5}
 
+forstatement 	: for forcontrol statement_innerloop	{For (fst $2) (fst (snd $2)) (snd (snd $2)) $3}
+
+forcontrol	: '(' forinit forbreakcondition ')'	{($2, ($3, []))}
+		| '(' forinit forbreakcondition forincrement ')' {($2, ($3, $4))}
+		
+forinit		: localvariabledeclarationstatement	{$1}
+		| statementexpressions ';'		{map (\s -> StatementExpStatement s) $1}
+		| ';'					{[]}
+		
+forbreakcondition : ';'			{Nothing}
+		  | expression ';'	{Just $1}
+		  
+forincrement : statementexpressions	{$1}
+
 
 assignmentexpression : conditionalexpression {$1}
 		 |  assignment{StatementExpExp $1}
 
 emptystatement	 :  ';'  {EmptyStatement}
+
+assertstatement		: assert expression ';'			{Assert $2 Nothing}
+			| assert expression ':' expression ';' 	{Assert $2 (Just $4)}
 
 expressionstatement : statementexpression  ';' {$1}
 
@@ -278,21 +301,24 @@ returnstatement  : return  ';'  {Return Nothing}
 statementnoshortif : statementwithouttrailingsubstatement {$1}
 		 | ifthenelsestatementnoshortif {$1}
 		 | whilestatementnoshortif {$1}
+		 | forstatementnoshortif {$1}
+		 
 
 statementnoshortif_innerloop : statementwithouttrailingsubstatement_innerloop {$1}
 		 | ifthenelsestatementnoshortif_innerloop {$1}
 		 | whilestatementnoshortif {$1}
+		 | forstatementnoshortif {$1}
 		 
 conditionalexpression : conditionalorexpression {$1}
 		 | conditionalorexpression '?' expression  ':'  conditionalexpression 
 		 {
 		 case $1 of 
-			(Boolean true) -> case $3 of 
+			(Boolean True) -> case $3 of 
 					      (Integer r) -> (Integer r)
 					      (Boolean r) -> (Boolean r)
 					      (String r) -> (String r)
 					      _ -> ConditionalExp $1 $3 $5
-			(Boolean false) -> case $5 of 
+			(Boolean False) -> case $5 of 
 					      (Integer r) -> (Integer r)
 					      (Boolean r) -> (Boolean r)
 					      (String r) -> (String r)
@@ -310,6 +336,9 @@ statementexpression : assignment {$1}
 		 | postdecrementexpression {$1}
 		 | methodinvocation {$1}
 		 | classinstancecreationexpression {$1}
+		 
+statementexpressions : statementexpression {[$1]}
+		     | statementexpressions ',' statementexpression {$1 ++ [$3]}
 
 ifthenelsestatementnoshortif :if '(' expression  ')'  statementnoshortif
 			      else statementnoshortif  {If $3 $5 (Just $7)}
@@ -319,6 +348,7 @@ ifthenelsestatementnoshortif_innerloop :if '(' expression  ')'  statementnoshort
 
 whilestatementnoshortif : while '(' expression  ')'  statementnoshortif_innerloop {While $3 $5}
 
+forstatementnoshortif 	: for forcontrol statementnoshortif_innerloop	{For (fst $2) (fst (snd $2)) (snd (snd $2)) $3}
 
 
 conditionalorexpression : conditionalandexpression {$1}
@@ -611,9 +641,10 @@ multiplicativeexpression : unaryexpression {$1}
 
 
 -- Hilfsfunktion für Statements wie "int i, i2, i3"
-varDeclHelper :: (String, [(String, Maybe Exp)]) -> [Statement]
-varDeclHelper (t, []) = []
-varDeclHelper (t, x:xs) = [LocalVarDecl t (fst x) (snd x)] ++ varDeclHelper (t, xs)
+varDeclHelper :: (String, Bool, [(String, Maybe Exp)]) -> [Statement]
+varDeclHelper (t, b, []) = []
+varDeclHelper (t, b, x:xs) = [LocalVarDecl t (fst x) (snd x) b] ++ varDeclHelper (t, b, xs)
+
 
 -- Hilfsfunktion für Felddeklerationen wie "int i, i2, i3"
 fieldDeclHelper :: (String, [Modifier], [(String, Maybe Exp)]) -> [MemberField]
