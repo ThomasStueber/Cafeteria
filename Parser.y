@@ -304,31 +304,31 @@ emptystatement	 :  ';'  {EmptyStatement}
 
 switchstatement : switch '(' expression ')' switchblock	{Switch $3 $5}
 
-switchblock : '{' '}'		{Block []}
-	    | '{' switchblockstatements '}' {if (unreachableCode ($2, True)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
+switchblock : '{' '}'		{[]}
+	    | '{' switchcaseblocks '}' {$2}
 	    
+switchcaseblocks : switchcaseblock {[$1]}
+		 | switchcaseblocks switchcaseblock {$1 ++ [$2]}
+	    
+switchcaseblock : switchblocklabels switchblockstatements {SwitchBlockStatement $1 $2}
 	    
 switchblockstatements : switchblockstatement {[$1]}
 		      | switchblockstatements switchblockstatement {$1 ++ [$2]}
 
-switchblockstatement : statement 		{$1}
-		     | breakstatement		{$1}
-		     | caselabel 		{$1}
-		     | default ':'		{Default}
+switchblockstatement : statement {$1}
+		     | breakstatement {$1}
+
+switchblocklabel : case expression ':' 	{CaseLabel $2}
+		 | default ':'		{DefaultLabel}
+		 
+switchblocklabels : switchblocklabels switchblocklabel {$1 ++ [$2]}
+		  | switchblocklabel {[$1]}
+		     
 		     
 breakstatement 	: break ';'		{Break Nothing}
 		| break identifier ';'	{Break (Just $2)}
 		      
 		      
-caselabel : 	case expression ':'  
-		{
-		case $2 of 
-			(String s) -> Case $2
-			(Integer i) -> Case $2  
-			(LocalOrFieldVar n) -> Case $2
-			(InstanceVar i n) -> Case $2
-			_ -> error "Nur konstante Ausdrücke können als Case-Labels verwendet werden"
-		}
 
 assertstatement		: assert expression ';'			{Assert $2 Nothing}
 			| assert expression ':' expression ';' 	{Assert $2 (Just $4)}
@@ -723,8 +723,6 @@ checkModifiers ms = if (((isJust (elemIndex Public ms)) && (isJust (elemIndex Pr
 unreachableCode :: ([Statement], Bool) -> Bool
 unreachableCode (s:ss, b) = case s of
 				Break _ -> if (null ss) then False else unreachableCode (ss, True)
-				Case _ -> unreachableCode (ss, False)
-				Default -> unreachableCode (ss, False)
 				Return _ -> if (null ss) then False else unreachableCode (ss, True)
 				_ -> unreachableCode (ss, b)
 unreachableCode ([], b) = b

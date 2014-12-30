@@ -23,14 +23,18 @@ data Statement = Block{statementlist :: [Statement]}
 	       | EmptyStatement
 	       | Break{breakLabel :: Maybe String}
 	       | Continue{continueLabel :: Maybe String}
-	       | Switch{switchexp :: Exp, switchstatement :: Statement}
-	       | Case{caseLabel :: Exp}  
-	       | Default
+	       | Switch{switchexp :: Exp, switchBlockStatements :: [Statement]}
+	       | SwitchBlockStatement{switchBlockLabels :: [SwitchBlockLabel], switchBlockStatements :: [Statement]}
 	       | LabeledStatement{labelName :: String, labeledStatement :: Statement}
 	       | ConstructorInvocation{constructorInvokParams :: [Exp]}
 	       | Assert{assertCondition :: Exp, assertValue :: Maybe Exp}
 	       | StaticBlock{staticBlock :: Statement}
 	       deriving Show
+	       
+	       
+data SwitchBlockLabel = CaseLabel{caseLabel :: Exp}  
+		      | DefaultLabel
+		      deriving Show
 	  
 	  
 -- StatementExp ist der Datentyp für Sprachkonstrukte die sowohl Expression als auch Statement sein können
@@ -112,6 +116,12 @@ makeNodesExp :: [Exp] -> [Tree String]
 makeNodesExp [] = []
 makeNodesExp (x:xs) = [expToTree(x)] ++ makeNodesExp(xs)
 
+makeNodesSwitchBlockLabels :: [SwitchBlockLabel] -> [Tree String]
+makeNodesSwitchBlockLabels [] = []
+makeNodesSwitchBlockLabels (x:xs) = [switchBlockLabelsToTree(x)] ++ makeNodesSwitchBlockLabels(xs)
+
+
+
 classDefToTree ::  ClassDef -> (Tree String)
 classDefToTree (ClassDef t modifiers fl vl cl sb) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node ("Modifiers: " ++ (show modifiers)) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl), Node "Constructors" (makeNodesConstructors cl)]
 
@@ -133,10 +143,16 @@ statementToTree (Return(e)) = Node "Return" [if (isJust e) then (Node "Return-Ex
 statementToTree (LocalVarDecl t  name ini b) = Node "Dekl. lokaler Variable" [Node ("Name: " ++ name) [], Node ("Datentyp: " ++ t) [], Node ("final: " ++ (show b)) [], if (isJust ini) then (Node "Initialisierung" [expToTree (fromJust ini)]) else (Node "Variable wird nicht initialisiert" [])]
 statementToTree (For i e inc s) = Node "For"  [Node "Initialisierung" (makeNodesStatement i), if (isJust e) then (Node "Abbruchbedingung" [(expToTree (fromJust e))]) else (Node "Keine Abbruchbedingung" []), Node "Inkrementierung" (makeNodesStatementExp inc), Node "Schleifenkörper" [(statementToTree s)]]
 statementToTree (StatementExpStatement(e)) = statementExpToTree e
-statementToTree (Switch e b) = Node "Switch" [Node "Expression" [(expToTree e)], statementToTree b]
-statementToTree (Case e) = Node "Case-Label" [Node "Label" [(expToTree e)]]
-statementToTree (Default) = Node "Default-Label" []
+statementToTree (Switch e bs) = Node "Switch" [Node "Expression" [(expToTree e)], Node "Case-Blöcke" (makeNodesStatement bs)]
+statementToTree (SwitchBlockStatement ls st) = Node "Switch-Block-Statement" [Node "Labels" (makeNodesSwitchBlockLabels ls), Node "Statements" (makeNodesStatement st)]
+--statementToTree (Case e) = Node "Case-Label" [Node "Label" [(expToTree e)]]
+--statementToTree (Default) = Node "Default-Label" []
 statementToTree s@_ = Node (show s) []
+
+
+switchBlockLabelsToTree :: SwitchBlockLabel -> (Tree String)
+switchBlockLabelsToTree (CaseLabel e) = Node "Case-Label" [Node "Label" [(expToTree e)]]
+switchBlockLabelsToTree (DefaultLabel) = Node "Default-Label" []
 
 statementExpToTree ::  StatementExp -> (Tree String)
 statementExpToTree (Assign e1 e2 op) = Node "Zuweisung" [Node ("Operator: " ++ op) [], Node "Linke Seite" [expToTree e1], Node "Rechte Seite" [expToTree e2]]
