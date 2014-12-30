@@ -5,7 +5,7 @@ import Data.Maybe
 type Typename = String
 
 
-data ClassDef = ClassDef{classname :: String, classmodifiers :: [Modifier], memberfunctions :: [MemberFunction], memberfields :: [MemberField], constructors :: [Constructor]} deriving Show
+data ClassDef = ClassDef{classname :: String, classmodifiers :: [Modifier], memberfunctions :: [MemberFunction], memberfields :: [MemberField], constructors :: [Constructor], classBodyBlocks :: [Statement]} deriving Show
 
 data MemberFunction = MemberFunction{returntype :: Typename, functionname :: String, formalparameters :: [(Typename, String)], functionmodifiers :: [Modifier], functionbody :: Statement} deriving Show
 
@@ -26,9 +26,10 @@ data Statement = Block{statementlist :: [Statement]}
 	       | Switch{switchexp :: Exp, switchstatement :: Statement}
 	       | Case{caseLabel :: Exp}  
 	       | Default
-	       | Label{labelName :: String}
+	       | LabeledStatement{labelName :: String, labeledStatement :: Statement}
 	       | ConstructorInvocation{constructorInvokParams :: [Exp]}
 	       | Assert{assertCondition :: Exp, assertValue :: Maybe Exp}
+	       | StaticBlock{staticBlock :: Statement}
 	       deriving Show
 	  
 	  
@@ -112,7 +113,7 @@ makeNodesExp [] = []
 makeNodesExp (x:xs) = [expToTree(x)] ++ makeNodesExp(xs)
 
 classDefToTree ::  ClassDef -> (Tree String)
-classDefToTree (ClassDef t modifiers fl vl cl) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node ("Modifiers: " ++ (show modifiers)) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl), Node "Constructors" (makeNodesConstructors cl)]
+classDefToTree (ClassDef t modifiers fl vl cl sb) = Node ("ClassDef") [Node ("Klassenname: " ++ t) [], Node ("Modifiers: " ++ (show modifiers)) [], Node "MemberFunctions" (makeNodesMF fl), Node "MemberFields" (makeNodesMV vl), Node "Constructors" (makeNodesConstructors cl)]
 
 memberFunctionToTree ::  MemberFunction -> (Tree String)
 memberFunctionToTree (MemberFunction t name parameter modifier statement) = Node "MemberFunction" [Node ("Name: " ++ name) [], Node ("Rückgabedatentyp: " ++ t) [], Node ("Modifier: " ++ (show modifier)) [], Node ("Parameter: " ++ (show parameter)) [], Node "Body" [statementToTree statement]]
@@ -132,6 +133,9 @@ statementToTree (Return(e)) = Node "Return" [if (isJust e) then (Node "Return-Ex
 statementToTree (LocalVarDecl t  name ini b) = Node "Dekl. lokaler Variable" [Node ("Name: " ++ name) [], Node ("Datentyp: " ++ t) [], Node ("final: " ++ (show b)) [], if (isJust ini) then (Node "Initialisierung" [expToTree (fromJust ini)]) else (Node "Variable wird nicht initialisiert" [])]
 statementToTree (For i e inc s) = Node "For"  [Node "Initialisierung" (makeNodesStatement i), if (isJust e) then (Node "Abbruchbedingung" [(expToTree (fromJust e))]) else (Node "Keine Abbruchbedingung" []), Node "Inkrementierung" (makeNodesStatementExp inc), Node "Schleifenkörper" [(statementToTree s)]]
 statementToTree (StatementExpStatement(e)) = statementExpToTree e
+statementToTree (Switch e b) = Node "Switch" [Node "Expression" [(expToTree e)], statementToTree b]
+statementToTree (Case e) = Node "Case-Label" [Node "Label" [(expToTree e)]]
+statementToTree (Default) = Node "Default-Label" []
 statementToTree s@_ = Node (show s) []
 
 statementExpToTree ::  StatementExp -> (Tree String)

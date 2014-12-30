@@ -109,17 +109,17 @@ qualifiedname    : name  '.' identifier {$1 ++ "." ++ $3}
 
 simplename       : identifier {$1}
 
-classdeclaration : class identifier classbody {ClassDef $2 [] (snd (snd $3)) (fst (snd $3)) (fst $3)}
-                 | modifiers class identifier classbody {ClassDef $3 (checkModifiers $1) (snd (snd $4)) (fst (snd $4)) (fst $4)}
+classdeclaration : class identifier classbody {ClassDef $2 [] (fst (snd $3)) (snd (fst $3)) (fst (fst $3)) (snd (snd $3))}
+                 | modifiers class identifier classbody {ClassDef $3 (checkModifiers $1) (fst (snd $4)) (snd (fst $4)) (fst (fst $4)) (snd (snd $4))}
 
-classbody        : '{' '}'  { ([], ([],[])) }
+classbody        : '{' '}'  { (([], []), ([],[])) }
 		 | '{' classbodydeclarations  '}' { $2 }
 
 modifiers        : modifier {[$1]}
 		 | modifiers modifier		 {$1 ++ [$2]}
 
 classbodydeclarations :  classbodydeclaration {$1}
-		 | classbodydeclarations classbodydeclaration{((fst $1) ++ (fst $2) , ((fst (snd $1)) ++ (fst (snd $2)), (snd (snd $1)) ++ (snd (snd $2))))}
+		 | classbodydeclarations classbodydeclaration{(((fst (fst $1)) ++ (fst (fst $2)), (snd (fst $1)) ++ (snd (fst $2))) , ((fst (snd $1)) ++ (fst (snd $2)), (snd (snd $1)) ++ (snd (snd $2))))}
 
 modifier         : public {Public}
 		 | protected {Protected}
@@ -130,17 +130,22 @@ modifier         : public {Public}
 
 classtype        : classorinterfacetype{$1}
 
-classbodydeclaration : classmemberdeclaration {$1}
-		 | constructordeclaration {([$1], ([],[]))}
+classbodydeclaration : classmemberdeclaration 	{$1}
+		 | constructordeclaration 	{(([$1], []), ([],[]))}
+		 | staticblock			{(([],[]), ([], [$1]))}
+		 
+		 
+staticblock : static block			{StaticBlock $2}
+	    | block				{$1}
 
 classorinterfacetype : name{$1}
 
-classmemberdeclaration : fielddeclaration {([], ($1, []))}
-		 | methoddeclaration {([], ([], [$1]))}
+classmemberdeclaration : fielddeclaration {(([], $1), ([], []))}
+		 | methoddeclaration {(([], []), ([$1], []))}
 
 constructordeclaration : constructordeclarator constructorbody {Constructor [] (fst $1) (Block $2) (snd $1)}
 		 |  modifiers constructordeclarator constructorbody 
-		 {Constructor (checkModifiers $1) (fst $2) (Block $3) (snd $2)}
+		 {Constructor (checkModifiers $1) (fst $2) (if (unreachableCode ($3, False)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $3) (snd $2)}
 
 fielddeclaration : type variabledeclarators  ';' {fieldDeclHelper ($1, [], $2)}
  		 | modifiers type variabledeclarators  ';' {fieldDeclHelper ($2, (checkModifiers $1), $3)}
@@ -148,10 +153,10 @@ fielddeclaration : type variabledeclarators  ';' {fieldDeclHelper ($1, [], $2)}
 methoddeclaration : methodheader methodbody {MemberFunction (fst (snd $1)) (fst (snd (snd $1))) (snd (snd (snd $1))) (fst $1) $2}
 
 block            : '{'   '}' {Block []}
-		 | '{'  blockstatements  '}' {Block $2}
+		 | '{'  blockstatements  '}' {if (unreachableCode ($2, False)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
 		 
 block_innerloop  : '{'   '}' {Block []}
-		 | '{'  blockstatements_innerloop  '}' {Block $2}
+		 | '{'  blockstatements_innerloop  '}' {if (unreachableCode ($2, False)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
 
 constructordeclarator :  simplename '('  ')'  {($1, [])}
 		 |  simplename '(' formalparameterlist ')'  {($1, $3)}
@@ -226,12 +231,16 @@ statement        : statementwithouttrailingsubstatement{$1}
 		 | ifthenelsestatement {$1}
 		 | whilestatement {$1}
 		 | forstatement {$1}
+		 | identifier ':' statement {LabeledStatement $1 $3}
+
+		 
 		 
 statement_innerloop        : statementwithouttrailingsubstatement_innerloop{$1}
 		 | ifthenstatement_innerloop {$1}
 		 | ifthenelsestatement_innerloop {$1}
 		 | whilestatement {$1}
 		 | forstatement {$1}
+		 | identifier ':' statement_innerloop {LabeledStatement $1 $3}
 		 
 expression       : assignmentexpression {$1}
 
@@ -247,12 +256,10 @@ statementwithouttrailingsubstatement : block {$1}
 		 | returnstatement {$1}
 		 | dowhilestatement {$1}
 		 | assertstatement {$1}
-		 | identifier ':' {Label $1}
 		 | switchstatement {$1}
 
 		 
-statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
-		 | break identifier ';' {Break (Just $2)}
+statementwithouttrailingsubstatement_innerloop : breakstatement		{$1}
 		 | continue ';' {Continue Nothing}
 		 | continue identifier ';' {Continue (Just $2)}
 		 | block_innerloop {$1}
@@ -261,7 +268,6 @@ statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
 		 | returnstatement {$1}
 		 | dowhilestatement {$1}
 		 | assertstatement {$1}
-		 | identifier ':' {Label $1}
 		 | switchstatement {$1}
 
 ifthenstatement  : if '(' expression  ')'  statement {If $3 $5 Nothing}
@@ -299,15 +305,19 @@ emptystatement	 :  ';'  {EmptyStatement}
 switchstatement : switch '(' expression ')' switchblock	{Switch $3 $5}
 
 switchblock : '{' '}'		{Block []}
-	    | '{' switchblockstatements '}' {Block $2}
+	    | '{' switchblockstatements '}' {if (unreachableCode ($2, True)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
 	    
 	    
 switchblockstatements : switchblockstatement {[$1]}
 		      | switchblockstatements switchblockstatement {$1 ++ [$2]}
 
-switchblockstatement : statement_innerloop 	{$1}
+switchblockstatement : statement 		{$1}
+		     | breakstatement		{$1}
 		     | caselabel 		{$1}
 		     | default ':'		{Default}
+		     
+breakstatement 	: break ';'		{Break Nothing}
+		| break identifier ';'	{Break (Just $2)}
 		      
 		      
 caselabel : 	case expression ':'  
@@ -332,12 +342,14 @@ statementnoshortif : statementwithouttrailingsubstatement {$1}
 		 | ifthenelsestatementnoshortif {$1}
 		 | whilestatementnoshortif {$1}
 		 | forstatementnoshortif {$1}
+		 | identifier ':' statementnoshortif {LabeledStatement $1 $3}
 		 
 
 statementnoshortif_innerloop : statementwithouttrailingsubstatement_innerloop {$1}
 		 | ifthenelsestatementnoshortif_innerloop {$1}
 		 | whilestatementnoshortif {$1}
 		 | forstatementnoshortif {$1}
+		 | identifier ':' statementnoshortif_innerloop {LabeledStatement $1 $3}
 		 
 conditionalexpression : conditionalorexpression {$1}
 		 | conditionalorexpression '?' expression  ':'  conditionalexpression 
@@ -475,6 +487,9 @@ primarynonewarray : literal {$1}
 		 {
 		  case $2 of 
 			(Integer m) -> (Integer m)
+			(String m) -> (String m)
+			(Boolean m) -> (Boolean m)
+			(Char m) -> (Char m)
 			_ -> $2
 		 }
                  | classinstancecreationexpression {StatementExpExp $1}
@@ -705,6 +720,18 @@ checkModifiers ms = if (((isJust (elemIndex Public ms)) && (isJust (elemIndex Pr
 		    else ms
 
 
+unreachableCode :: ([Statement], Bool) -> Bool
+unreachableCode (s:ss, b) = case s of
+				Break _ -> if (null ss) then False else unreachableCode (ss, True)
+				Case _ -> unreachableCode (ss, False)
+				Default -> unreachableCode (ss, False)
+				Return _ -> if (null ss) then False else unreachableCode (ss, True)
+				_ -> unreachableCode (ss, b)
+unreachableCode ([], b) = b
+
+
+
+		    
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
