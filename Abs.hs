@@ -48,7 +48,7 @@ data Modifier = Public
 	      | Final
 	      | Protected
 	      | Abstract
-	      deriving Show
+	      deriving (Show, Eq)
 	      
 	      
 	      

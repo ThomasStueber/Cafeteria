@@ -6,6 +6,7 @@ import Data.Maybe
 import Data.String.Utils
 import Data.Bits
 import Data.Word
+import Data.List
 }
 
 %name parseJava
@@ -83,6 +84,7 @@ import Data.Word
       continue 			{ContinueToken _}
       switch 			{SwitchToken _}
       case 			{CaseToken _}
+      default			{DefaultToken _}
       instanceof 		{InstanceOfToken _}
       static 			{StaticToken _}
       protected 		{ProtectedToken _}
@@ -108,7 +110,7 @@ qualifiedname    : name  '.' identifier {$1 ++ "." ++ $3}
 simplename       : identifier {$1}
 
 classdeclaration : class identifier classbody {ClassDef $2 [] (snd (snd $3)) (fst (snd $3)) (fst $3)}
-                 | modifiers class identifier classbody {ClassDef $3 $1 (snd (snd $4)) (fst (snd $4)) (fst $4)}
+                 | modifiers class identifier classbody {ClassDef $3 (checkModifiers $1) (snd (snd $4)) (fst (snd $4)) (fst $4)}
 
 classbody        : '{' '}'  { ([], ([],[])) }
 		 | '{' classbodydeclarations  '}' { $2 }
@@ -138,10 +140,10 @@ classmemberdeclaration : fielddeclaration {([], ($1, []))}
 
 constructordeclaration : constructordeclarator constructorbody {Constructor [] (fst $1) (Block $2) (snd $1)}
 		 |  modifiers constructordeclarator constructorbody 
-		 {Constructor $1 (fst $2) (Block $3) (snd $2)}
+		 {Constructor (checkModifiers $1) (fst $2) (Block $3) (snd $2)}
 
 fielddeclaration : type variabledeclarators  ';' {fieldDeclHelper ($1, [], $2)}
- 		 | modifiers type variabledeclarators  ';' {fieldDeclHelper ($2, $1, $3)}
+ 		 | modifiers type variabledeclarators  ';' {fieldDeclHelper ($2, (checkModifiers $1), $3)}
 
 methoddeclaration : methodheader methodbody {MemberFunction (fst (snd $1)) (fst (snd (snd $1))) (snd (snd (snd $1))) (fst $1) $2}
 
@@ -160,9 +162,9 @@ constructorbody	 : '{' '}' {[]}
 		 | '{' explicitconstructorinvocation blockstatements '}' {[$2] ++ $3}
 
 methodheader	 : type methoddeclarator {([], ($1, $2))}
-		 | modifiers type methoddeclarator {($1, ($2, $3))}
+		 | modifiers type methoddeclarator {((checkModifiers $1), ($2, $3))}
 		 | void methoddeclarator {([], ("void", $2))}
-		 | modifiers void methoddeclarator {($1, ("void", $3))}
+		 | modifiers void methoddeclarator {((checkModifiers $1), ("void", $3))}
 
 type             : primitivetype {$1}
 		 | referencetype {$1}
@@ -245,6 +247,8 @@ statementwithouttrailingsubstatement : block {$1}
 		 | returnstatement {$1}
 		 | dowhilestatement {$1}
 		 | assertstatement {$1}
+		 | identifier ':' {Label $1}
+		 | switchstatement {$1}
 
 		 
 statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
@@ -257,6 +261,8 @@ statementwithouttrailingsubstatement_innerloop : break ';'	{Break Nothing}
 		 | returnstatement {$1}
 		 | dowhilestatement {$1}
 		 | assertstatement {$1}
+		 | identifier ':' {Label $1}
+		 | switchstatement {$1}
 
 ifthenstatement  : if '(' expression  ')'  statement {If $3 $5 Nothing}
 
@@ -289,6 +295,30 @@ assignmentexpression : conditionalexpression {$1}
 		 |  assignment{StatementExpExp $1}
 
 emptystatement	 :  ';'  {EmptyStatement}
+
+switchstatement : switch '(' expression ')' switchblock	{Switch $3 $5}
+
+switchblock : '{' '}'		{Block []}
+	    | '{' switchblockstatements '}' {Block $2}
+	    
+	    
+switchblockstatements : switchblockstatement {[$1]}
+		      | switchblockstatements switchblockstatement {$1 ++ [$2]}
+
+switchblockstatement : statement_innerloop 	{$1}
+		     | caselabel 		{$1}
+		     | default ':'		{Default}
+		      
+		      
+caselabel : 	case expression ':'  
+		{
+		case $2 of 
+			(String s) -> Case $2
+			(Integer i) -> Case $2  
+			(LocalOrFieldVar n) -> Case $2
+			(InstanceVar i n) -> Case $2
+			_ -> error "Nur konstante Ausdrücke können als Case-Labels verwendet werden"
+		}
 
 assertstatement		: assert expression ';'			{Assert $2 Nothing}
 			| assert expression ':' expression ';' 	{Assert $2 (Just $4)}
@@ -664,6 +694,15 @@ expToName (InstanceVar i n) = (expToName i) ++ "." ++ n
 expToName (LocalOrFieldVar n) = n
 expToName _ = error ""
 
+checkModifiers :: [Modifier] -> [Modifier]
+checkModifiers ms = if (((isJust (elemIndex Public ms)) && (isJust (elemIndex Private ms))) || ((isJust (elemIndex Public ms)) && (isJust (elemIndex Protected ms))) || ((isJust (elemIndex Private ms)) && (isJust (elemIndex Protected ms)))) then error "public, private und protected können nicht zusammen verwendet werden"
+		    else if (length (elemIndices Public ms) > 1) then error "public wird mehrfach an der selben Stelle verwendet"
+		    else if (length (elemIndices Private ms) > 1) then error "private wird mehrfach an der selben Stelle verwendet"
+		    else if (length (elemIndices Protected ms) > 1) then error "protected wird mehrfach an der selben Stelle verwendet"
+		    else if (length (elemIndices Abstract ms) > 1) then error "abstract wird mehrfach an der selben Stelle verwendet"
+		    else if (length (elemIndices Final ms) > 1) then error "final wird mehrfach an der selben Stelle verwendet"
+		    else if (length (elemIndices Static ms) > 1) then error "static wird mehrfach an der selben Stelle verwendet"
+		    else ms
 
 
 parseError :: [Token] -> a
