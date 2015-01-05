@@ -4,3 +4,4 @@ Parser
 Main
 Parser.hs
 Scanner.hs
+*.class
