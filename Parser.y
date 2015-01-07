@@ -145,18 +145,18 @@ classmemberdeclaration : fielddeclaration {(([], $1), ([], []))}
 
 constructordeclaration : constructordeclarator constructorbody {Constructor [] (fst $1) (Block $2) (snd $1)}
 		 |  modifiers constructordeclarator constructorbody 
-		 {Constructor (checkModifiers $1) (fst $2) (if (unreachableCode ($3, False)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $3) (snd $2)}
+		 {Constructor (checkModifiers $ checkModifiersConstructor $1) (fst $2) (if (unreachableCode $3 False) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $3) (snd $2)}
 
 fielddeclaration : type variabledeclarators  ';' {fieldDeclHelper ($1, [], $2)}
- 		 | modifiers type variabledeclarators  ';' {fieldDeclHelper ($2, (checkModifiers $1), $3)}
+ 		 | modifiers type variabledeclarators  ';' {fieldDeclHelper ($2, (checkModifiers $ checkModifiersField $1), $3)}
 
 methoddeclaration : methodheader methodbody {MemberFunction (fst (snd $1)) (fst (snd (snd $1))) (snd (snd (snd $1))) (fst $1) $2}
 
 block            : '{'   '}' {Block []}
-		 | '{'  blockstatements  '}' {if (unreachableCode ($2, False)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
+		 | '{'  blockstatements  '}' {if (unreachableCode $2 False) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
 		 
 block_innerloop  : '{'   '}' {Block []}
-		 | '{'  blockstatements_innerloop  '}' {if (unreachableCode ($2, False)) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
+		 | '{'  blockstatements_innerloop  '}' {if (unreachableCode $2 False) then error "In einem Block kommt nicht erreichbarer Code vor" else Block $2}
 
 constructordeclarator :  simplename '('  ')'  {($1, [])}
 		 |  simplename '(' formalparameterlist ')'  {($1, $3)}
@@ -719,13 +719,19 @@ checkModifiers ms = if (((isJust (elemIndex Public ms)) && (isJust (elemIndex Pr
 		    else if (length (elemIndices Static ms) > 1) then error "static wird mehrfach an der selben Stelle verwendet"
 		    else ms
 
+checkModifiersField :: [Modifier] -> [Modifier]
+checkModifiersField ms = if (isJust (elemIndex Abstract ms)) then error "Ungültiger Modifier bei einem Feld" else ms
 
-unreachableCode :: ([Statement], Bool) -> Bool
-unreachableCode (s:ss, b) = case s of
-				Break _ -> if (null ss) then False else unreachableCode (ss, True)
-				Return _ -> if (null ss) then False else unreachableCode (ss, True)
-				_ -> unreachableCode (ss, b)
-unreachableCode ([], b) = b
+checkModifiersConstructor :: [Modifier] -> [Modifier]
+checkModifiersConstructor ms = if (isJust (elemIndex Abstract ms) || isJust (elemIndex Final ms) || isJust (elemIndex Static ms)) then error "Ungültiger Modifier bei einem Konstruktor" else ms
+
+
+unreachableCode :: [Statement] -> Bool -> Bool
+unreachableCode (s:ss) b = case s of
+				Break _ -> if (null ss) then False else unreachableCode ss True
+				Return _ -> if (null ss) then False else unreachableCode ss True
+				_ -> unreachableCode ss b
+unreachableCode [] b = b
 
 
 
