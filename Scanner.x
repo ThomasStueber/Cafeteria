@@ -117,8 +117,8 @@ tokens :-
   ";"					{\p -> \s -> SemicolonToken p }
   ","					{\p -> \s -> CommaToken p }
 
-  (0b$bindigit | 0b(($bindigit+(\_)*)+$bindigit))	{\p -> \s -> IntLiteralToken (binToInt (drop 2 (replace "_" "" s))) p}
-  (0x$hexdigit | 0x(($hexdigit+(\_)*)+$hexdigit))	{\p -> \s -> IntLiteralToken (fst(head(readHex (drop 2 (replace "_" "" s))))) p}
+  (0[bB]$bindigit | 0[bB](($bindigit+(\_)*)+$bindigit))	{\p -> \s -> IntLiteralToken (binToInt (drop 2 (replace "_" "" s))) p}
+  (0[xX]$hexdigit | 0[xX](($hexdigit+(\_)*)+$hexdigit))	{\p -> \s -> IntLiteralToken (fst(head(readHex (drop 2 (replace "_" "" s))))) p}
   (0$octaldigit | 0(($octaldigit+(\_)*)+$octaldigit))	{\p -> \s -> IntLiteralToken (fst(head(readOct (drop 1 (replace "_" "" s))))) p}
   ($digit | ($digit+(\_)*)+$digit)			{\p -> \s -> IntLiteralToken (read (replace "_" "" s)) p}
   
