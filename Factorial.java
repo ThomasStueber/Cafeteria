@@ -1,5 +1,5 @@
 
-public class Faculty {
+public class Factorial {
     public static int faculty(int n, boolean recursive) {
         if (n < 0)
             return -1;
