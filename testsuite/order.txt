@@ -1,0 +1,8 @@
+EmptyClassTest
+AttributesTest
+EmptyConstructorTest
+VoidMethodTest
+IntDeclarationTest
+// DoubleDeclarationTest
+BooleanDeclarationTest
+AssignAttributesTest
