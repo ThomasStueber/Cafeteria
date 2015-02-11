@@ -6,3 +6,5 @@ Main.exe
 Parser.hs
 Scanner.hs
 *.class
+TestSuite.jar
+*info*
