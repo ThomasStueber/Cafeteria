@@ -44,7 +44,7 @@ data StatementExp = Assign{assignlhs :: Exp, assignrhs :: Exp, assignop :: Strin
 	  	  | PrefixUnary{prefixop :: String, prefixexp :: Exp}					-- Operator (++, --), Ausdruck 
 		  | PostfixUnary{postfixop :: String, postfixexp :: Exp}				-- Operator (++, --), Ausdruck
 	  	  | TypedStatementExp{typedstatementexp :: StatementExp, statementexptype :: Typename}
-		  deriving Show		
+		  deriving (Show, Eq)		
 		  
 -- modifiers
 data Modifier = Public
@@ -75,7 +75,7 @@ data Exp = This
 	  | TypedExp{typedexp :: Exp, exptype :: Typename}
 	  | InstanceOf{instanceOfExp :: Exp, instanceOfType :: Typename}
 	  | ConditionalExp{conditionalCond :: Exp, conditionalIfCase :: Exp, conditionalElseCase :: Exp}
-	  deriving Show
+	  deriving (Show, Eq)
 
 	 
 	 
