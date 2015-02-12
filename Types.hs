@@ -1,5 +1,7 @@
-module Types where
+module Types (typeCheck) where
 import Abs
+import TypeAdder
+import ClassCollector
 import qualified Data.Map as M
 
 typeCheck :: [ClassDef] -> [ClassDef]
@@ -17,14 +19,17 @@ getMemberFuncs [] _ = []
 getMemberFuncs (fun:funs) map = [(getFunction fun map)] ++ (getMemberFuncs funs map)
 
 getFunction :: MemberFunction -> (M.Map String Typename) -> MemberFunction 
-getFunction (MemberFunction rType name params mods body) map = MemberFunction rType name params mods (getFuncBody rType map body) where newMap = (getParams params map)
+getFunction (MemberFunction rType name params mods (Block stLs)) map = MemberFunction rType name params mods (Block (getFuncBody rType map stLs)) where newMap = (getParams params map)
+getFunction (MemberFunction rType name params mods stmt) _ = if (isAbstract mods) then (MemberFunction rType name params mods stmt) else error "Methodenkörper muss inerhalb eines Blocks stehen" 
 
 getParams :: [(Typename, String)] -> (M.Map String Typename) -> (M.Map String Typename)
 getParams [] map = map
 getParams (param:params) map = getParams params newMap where newMap = (putVar (switchTuple param) map)
 
-getFuncBody :: Typename -> (M.Map String Typename) -> Statement -> Statement
-getFuncBody rType map (Block []) = Block []
+getFuncBody :: Typename -> (M.Map String Typename) -> [Statement] -> [Statement]
+getFuncBody rType map [] = []
+getFuncBody rType map (l@(LocalVarDecl _ _ _ _):sts) = [(snd procVarDecl)] ++ (getFuncBody rType (fst procVarDecl) sts) where procVarDecl = getVarDecl map l
+getFuncBody rType map (st:sts) = [getStatement True rType map st] ++ (getFuncBody rType map sts)
 
 
 --
@@ -43,6 +48,7 @@ getFieldTable [] map = map
 getFieldTable (f:fs) map = getFieldTable fs newMap where newMap = (putVar ((fieldname f), (fieldtype f)) map)
 
 
+
 --
 -- Constructors
 --
@@ -52,6 +58,8 @@ getConstructors (c:cs) map = [(getCon c map)] ++ (getConstructors cs map)
 
 getCon :: Constructor -> (M.Map String Typename) -> Constructor
 getCon (Constructor mods name body params) map = Constructor mods name (getStatement True "" newMap body) params where newMap = (getParams params map)
+
+
 
 
 --
@@ -69,19 +77,21 @@ getSingleBlock map (bl@(Block b):sts) = [Block (getSingleBlock map b)] ++ (getSi
 getSingleBlock map (l@(LocalVarDecl _ _ _ _):sts) = [(snd procVarDecl)] ++ (getSingleBlock (fst procVarDecl) sts) where procVarDecl = getVarDecl map l 
 getSingleBlock map (st:sts) = [(getStatement False "" map st)] ++ (getSingleBlock map sts)
 
+
 -- 
 -- Statements
 --
 getStatement :: Bool -> Typename -> (M.Map String Typename) -> Statement -> Statement
 -- Return
 getStatement False _ _ (Return _) = error "Return nicht erlaubt"
-getStatement True "" _ r@(Return Nothing) = r
-getStatement True "" _ (Return _) = error "Return darf keinen Rückgabewert haben"
---getStatement True rType map r@(Return (Just exp)) = if (exptype typedExp) == rType then Return (Just typedExp) else error "Typen stimmen nicht überein" 
-											   -- where typedExp = addExp map exp
+getStatement True "void" _ r@(Return Nothing) = r
+getStatement True "void" _ (Return _) = error "Return darf keinen Rückgabewert haben"
+getStatement True rType map r@(Return (Just exp)) = if (exptype typedExp) == rType then Return (Just typedExp) else error "Typen stimmen nicht überein" 
+													where typedExp = addExp map exp
 getStatement True rType _ (Return Nothing) = error "Return benötigt Rückgabewert"
 -- Block							
 getStatement False _ map (Block stLs) = Block (getSingleBlock map stLs)
+--getStatement True rType map (Block stLs) = Block (getFuncBody
 --more for other blocks
 -- While
 getStatement return rType map (While cond body) = if (exptype typedCond) == "boolean" then While typedCond (getStatement return rType map body) else error "Condition in while muss Typ boolean haben"
@@ -103,20 +113,22 @@ getStatement return rType map (Do body cond) = if (exptype typedCond) == "boolea
 getStatement return rType map (LabeledStatement label stmt) = LabeledStatement label (getStatement return rType map stmt)
 --StaticBlock
 getStatement return rType map (StaticBlock block ) = StaticBlock (getStatement return rType map block)
-											 										 
+getStatement return rType map (StatementExpStatement s) = StatementExpStatement (addStatementExp map s) 										 
 
 getNonRecursiveStmt :: (M.Map String Typename) -> Statement -> Statement
 --EmptyStatement
 getNonRecursiveStmt _ EmptyStatement = EmptyStatement
---LocalVarDecl
+--
 --getNonRecursiveStmt	map  =  	
 
 getVarDecl :: (M.Map String Typename) -> Statement -> ((M.Map String Typename), (Statement))
 getVarDecl map v@(LocalVarDecl tName vName (Just init) final) = if (exptype typedInit) == tName then ((putVar (vName, tName) map), (LocalVarDecl tName vName (Just typedInit) final))
 																else error "Typen stimmen nicht" 
 																where typedInit = addExp map init
+
 getVarDecl map v@(LocalVarDecl tName vName Nothing final) = ((putVar (vName, tName) map), v)
 																					 
+
 																					 
 --
 -- Helper
@@ -127,8 +139,9 @@ putVar (name, typ) map = if (M.lookup (name) map) == Nothing then M.insert name 
 				   
 
 switchTuple :: (Typename, String) -> (String, Typename)
-switchTuple (t, s) = (s, t)			
+switchTuple (t, s) = (s, t)	
 
-addExp :: (M.Map String Typename) -> Exp -> Exp
---literals
-addExp _ i@(Integer int) = TypedExp i "int"  
+isAbstract :: [Modifier] -> Bool
+isAbstrect [] = False		  
+isAbstract (Abstract:mods) = True
+isAbstract (_:mods) = isAbstract mods
