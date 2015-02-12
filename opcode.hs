@@ -249,6 +249,12 @@ data Command = Explicit Arg              -- Byte Argument
              | ImpDep1     -- Dubugging only, not to be used !
              | ImpDep2     -- Dubugging only, not to be used !
 --
+-- surrogates, temporary non-opcode Commands for translation
+             | Srgt_BreakLoop
+             | Srgt_Continue
+             | Srgt_Jump
+             | Srgt_GotoLabel String
+--
              deriving (Show)
 
 
@@ -800,7 +806,33 @@ addConstStr a tag consts tl | ((tl ?% a) == Nothing) = ((snd (insertStr consts a
                                                                                     insertStr [] a tag n = ([(translateConstTag tag) : (fromString a)], n)
 
 
--- shift ConstantPool Index for long Constants by value (length of const16)
+-- recalculate Offsets for relative Jump-Commands
+
+recalcRelativeOffsets :: (Indexed Command) -> (Indexed Command)
+recalcRelativeOffsets (i, (Cmd_IfEq a b)) = (i, (Cmd_IfEq (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfNe a b)) = (i, (Cmd_IfNe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfLt a b)) = (i, (Cmd_IfLt (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfGe a b)) = (i, (Cmd_IfGe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfGt a b)) = (i, (Cmd_IfGt (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfLe a b)) = (i, (Cmd_IfLe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfICmpEq a b)) = (i, (Cmd_IfICmpEq (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfICmpNe a b)) = (i, (Cmd_IfICmpNe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfICmpLt a b)) = (i, (Cmd_IfICmpLt (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfICmpGe a b)) = (i, (Cmd_IfICmpGe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfICmpGt a b)) = (i, (Cmd_IfICmpGt (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfICmpLe a b)) = (i, (Cmd_IfICmpLe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfACmpEq a b)) = (i, (Cmd_IfACmpEq (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfACmpNe a b)) = (i, (Cmd_IfACmpNe (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_Goto a b)) = (i, (Cmd_Goto (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_JSr a b)) = (i, (Cmd_JSr (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfNull a b)) = (i, (Cmd_IfNull (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_IfNonNull a b)) = (i, (Cmd_IfNonNull (head (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))) (head (tail (fromShort (useValueOf ((useValueOf (toShort [a, b])) - i)))))))
+recalcRelativeOffsets (i, (Cmd_GotoW a b c d)) = (i, (Cmd_GotoW (head (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i)))) (head (tail (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i))))) (head (tail (tail (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i)))))) (head (tail (tail (tail (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i)))))))))
+recalcRelativeOffsets (i, (Cmd_JSrW a b c d)) = (i, (Cmd_JSrW (head (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i)))) (head (tail (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i))))) (head (tail (tail (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i)))))) (head (tail (tail (tail (fromInt (useValueOf ((useValueOf (toInt [a, b, c, d])) - i)))))))))
+recalcRelativeOffsets (i, cmd) = (i,cmd)
+
+
+-- shift ConstantPool Index (within Code) for different Constants by value (length of previous Constant Pools)
 
 updateConstI :: Command -> Int -> Command
 updateConstI (Cmd_LdC_I arg) i = Cmd_LdC_I (last (fromShort (useValueOf (useValueOf(toInt [arg]) + i))))
@@ -825,6 +857,26 @@ updateConstD :: Command -> Int -> Command
 updateConstD (Cmd_LdC2W_D arg1 arg2) i = Cmd_LdC2W_D (head (fromShort (useValueOf (useValueOf(toInt [arg1, arg2]) + i)))) (last (fromShort (useValueOf(useValueOf(toInt [arg1, arg2]) + i))))
 updateConstD x i = x
 
+-- Cmd_GetStatic Arg Arg     -- push Value of Static Field (at Index) onto Stack
+-- Cmd_PutStatic Arg Arg     -- set Value (from Stack) to Static Field (at Index)
+-- Cmd_GetField Arg Arg      -- push Value of Field (at Index Arg2 within Object (Reference Arg1)) onto Stack
+-- Cmd_PutField Arg Arg      -- set Value (from Stack) to Field (at Index Arg2 within Object (Reference Arg1))
+-- Cmd_InvokeV Arg Arg       -- Virtual Method Call on object (Pointer from Stack) at Index (Args)
+-- Cmd_InvokeSp Arg Arg      -- Method Call on object (Pointer from Stack) at Index (Args)
+-- Cmd_InvokeSt Arg Arg      -- Static Method Call at Index (Args)
+-- Cmd_InvokeIF Arg Arg      -- Interface Method Call on object (Pointer from Stack) at Index (Args)
+-- Cmd_InvokeD Arg Arg       -- Dynamic Method Call at Index (Args)
+-- Cmd_New Arg Arg           -- push Pointer to new object of Type at Index (Args) onto Stack
+-- Cmd_NewArray Arg          -- Create new Array on Stack with Length (from Stack) and Type (referenced by Arg)
+-- Cmd_ANewArray Arg Arg     -- Create new Array on Stack with Length (from Stack) and Type (referenced by Args)
+-- Cmd_CheckCast Arg Arg     -- check whether Pointer (topmost on Stack) is of Type at Index (Args)
+-- Cmd_InstanceOf Arg Arg
+
+-- shift ConstantPool Index (within COnstPool) for different Constants by value (length of previous Constant Pools)
+
+updateConstUTF8_c :: [[Word8]] -> Int -> [[Word8]]
+
+updateConstUTF8_c x i = x
 
 
 -- finalize ConstantPool by "unpacking" and concatenating partial ConstPools
@@ -838,8 +890,13 @@ finalizeConstPool x = foldl (++) [] (map unpack x) where unpack x = foldl (++) [
 --- Access Flags
 
 data AccessFlag = Acc_Public            -- 0x0001
+                | Acc_Private           -- 0x0002
+                | Acc_Protected         -- 0x0004
+                | Acc_Static            -- 0x0008
                 | Acc_Final             -- 0x0010
                 | Acc_Super             -- 0x0020
+                | Acc_Volatile          -- 0x0040
+                | Acc_Transient         -- 0x0080
                 | Acc_Interface         -- 0x0200
                 | Acc_Abstract          -- 0x0400
                 | Acc_Synthetic         -- 0x1000
@@ -850,8 +907,13 @@ data AccessFlag = Acc_Public            -- 0x0001
 setAccessFlags :: [AccessFlag] -> [Word8]
 
 setAccessFlags lst = fromShort(foldr (+) 0 (map translate lst)) where translate Acc_Public = 0x0001
+                                                                      translate Acc_Private = 0x0002
+                                                                      translate Acc_Protected = 0x0004
+                                                                      translate Acc_Static = 0x0008
                                                                       translate Acc_Final = 0x0010
                                                                       translate Acc_Super = 0x0020
+                                                                      translate Acc_Volatile = 0x0040
+                                                                      translate Acc_Transient = 0x0080
                                                                       translate Acc_Interface = 0x0200
                                                                       translate Acc_Abstract = 0x0400
                                                                       translate Acc_Synthetic = 0x1000

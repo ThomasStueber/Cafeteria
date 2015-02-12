@@ -58,13 +58,22 @@ useLongValueOf :: Int64 -> Int
 useLongValueOf = unsafeCoerce
 
 fromString :: String -> [Word8]
-fromString s = B.unpack (U.fromString s)
+fromString s = (fromShort (useValueOf (length (B.unpack (U.fromString s))))) ++ (B.unpack (U.fromString s))
 
 toString :: [Word8] -> String
-toString x = U.toString (B.pack x)
+toString x = U.toString (B.pack (tail (tail x)))
 
 toByteString :: [Word8] -> B.ByteString
 toByteString x = B.pack x
+
+tuple2FromList :: [Word8] -> (Word8, Word8)
+tuple2FromList [a, b] = (a, b)
+
+tuple4FromList :: [Word8] -> (Word8, Word8, Word8, Word8)
+tuple4FromList [a, b, c, d] = (a, b, c, d)
+
+tuple8FromList :: [Word8] -> (Word8, Word8, Word8, Word8, Word8, Word8, Word8, Word8)
+tuple8FromList [a, b, c, d, e, f, g, h] = (a, b, c, d, e, f, g, h)
 
 
 
