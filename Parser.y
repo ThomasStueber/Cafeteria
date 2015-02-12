@@ -420,7 +420,7 @@ assignmentoperator : '=' {"="}
 		 | '^=' {"^="}
 		 | '|='{"|="}
 
-preincrementexpression : '++' unaryexpression {PostfixUnary "++" $2}
+preincrementexpression : '++' unaryexpression {PrefixUnary "++" $2}
 
 predecrementexpression : '--' unaryexpression {PrefixUnary "--" $2}
 
