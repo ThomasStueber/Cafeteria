@@ -1,351 +1,369 @@
 module TypeAdder (addExp, addStatementExp) where
 import Abs
+import ClassCollector
 import qualified Data.Map as M
 
-addExp :: (M.Map String Typename) -> Exp -> Exp
+addExp :: ClassMap -> (M.Map String Typename) -> Exp -> Exp
 --literals
-addExp _ i@(Integer _) = TypedExp i "int"
-addExp _ c@(Char _)= TypedExp c "char"
-addExp _ b@(Boolean _)= TypedExp b "boolean"
-addExp _ s@(String _)= TypedExp s "String"
--- addExp map Null -> take type from variable it is assigned to
+addExp _ _ i@(Integer _) = TypedExp i "int"
+addExp _ _ c@(Char _)= TypedExp c "char"
+addExp _ _ b@(Boolean _)= TypedExp b "boolean"
+addExp _ _ s@(String _)= TypedExp s "String"
+-- addExp clMap table Null -> take type from variable it is assigned to
 
--- addExp map This -> put classname into list as (this, classname)
--- addExp map Super -> ???
-addExp map u@(Unary _ _) = addUnary map u
-addExp map i@(Infix _ _ _) = addInfix map i
-addExp map inst@(InstanceVar _ _) = String "NOT IMPLEMENTED" --addInstVar map inst
-addExp map l@(LocalOrFieldVar varName) = if mapResult == Nothing then error "Variable nicht definiert" else (TypedExp l (fromJust mapResult))
-									     where mapResult = (M.lookup varName map) 
-addExp map (StatementExpExp stmtExp) = TypedExp (StatementExpExp typedStmtExp) (statementexptype (typedStmtExp)) where typedStmtExp = addStatementExp map stmtExp
---addExp map c@(Cast _ _) = addCast c 
---addExp map instOf@(InstanceOf _ _) = addInstOf instOf
---addExp map ce@(ConditionalExp cond ifCase elseCase) = addCondExp condExp
+addExp clMap table This = TypedExp This (fromJust (M.lookup "this" table))
+-- addExp clMap table Super -> ???
+addExp clMap table u@(Unary _ _) = addUnary clMap table u
+addExp clMap table i@(Infix _ _ _) = addInfix clMap  table i
+addExp clMap table inst@(InstanceVar _ _) = addInstVar clMap table inst
+addExp clMap table l@(LocalOrFieldVar varName) = if mapResult == Nothing then error ("Variable " ++ (show varName) ++ " nicht definiert") else (TypedExp l (fromJust mapResult))
+									     where mapResult = (M.lookup varName table) 
+addExp clMap table (StatementExpExp stmtExp) = TypedExp (StatementExpExp typedStmtExp) (statementexptype (typedStmtExp)) where typedStmtExp = addStatementExp clMap table stmtExp
+addExp clMap table c@(Cast _ _) = addCast clMap table c 
+addExp clMap table instOf@(InstanceOf _ _) = addInstOf clMap table instOf
+--addExp clMap table ce@(ConditionalExp cond ifCase elseCase) = addCondExp condExp
 
-addUnary :: (M.Map String Typename) -> Exp -> Exp
-addUnary map u@Unary{unaryop="+", unaryexp=e} = case eType of
-												     "int" -> TypedExp u "int"
-												     "char" -> TypedExp u "int"
-												     _ -> error "Schlechter Operand"
-											    where eType = exptype (addExp map e)
-addUnary map u@Unary{unaryop="-", unaryexp=e} = case eType of
-												     "int" -> TypedExp u "int"
-												     "char" -> TypedExp u "int"
-												     _ -> error "Schlechter Operand"
-											    where eType = exptype (addExp map e)												 												 
-addUnary map u@Unary{unaryop="!", unaryexp=e} = case eType of
-												     "boolean" -> TypedExp u "boolean"
-												     _ -> error "Schlechter Operand"
-											    where eType = exptype (addExp map e)
-addUnary map u@Unary{unaryop="~", unaryexp=e} = case eType of
-												     "int" -> TypedExp u "int"
-												     "char" -> TypedExp u "int"
-												     _ -> error "Schlechter Operand"
-											    where eType = exptype (addExp map e)
+addUnary :: ClassMap -> (M.Map String Typename) -> Exp -> Exp
+addUnary clMap table u@Unary{unaryop="+", unaryexp=e} = case (exptype typedE) of
+															 "int" -> TypedExp (Unary "+" typedE) "int"
+															 "char" -> TypedExp (Unary "+" typedE) "int"
+															 _ -> error "Schlechter Operand"
+														where typedE = addExp clMap table e
+addUnary clMap table u@Unary{unaryop="-", unaryexp=e} = case (exptype typedE) of
+															 "int" -> TypedExp (Unary "-" typedE) "int"
+															 "char" -> TypedExp (Unary "-" typedE) "int"
+															 _ -> error "Schlechter Operand"
+														where typedE = addExp clMap table e												 												 
+addUnary clMap  table u@Unary{unaryop="!", unaryexp=e} = case (exptype typedE) of
+															  "boolean" -> TypedExp (Unary "!" typedE) "boolean"
+															  _ -> error "Schlechter Operand"
+														 where typedE = addExp clMap table e
+addUnary clMap  table u@Unary{unaryop="~", unaryexp=e} = case (exptype typedE) of
+															 "int" -> TypedExp (Unary "~" typedE) "int"
+															 "char" -> TypedExp (Unary "~" typedE) "int"
+															 _ -> error "Schlechter Operand"
+														 where typedE = addExp clMap table e
 												
 --
-addInfix :: (M.Map String Typename) -> Exp -> Exp
+addInfix :: ClassMap -> (M.Map String Typename) -> Exp -> Exp
 --logische Operatoren
 -- vorsicht::: ((new Cl1()) == null) geht
-addInfix map  i@Infix{infixop="==", lhs=l, rhs=r} = case (lType, rType) of
-													     ("char", "int") -> TypedExp i "boolean"
-													     ("int", "char") -> TypedExp i "boolean"
-													     (_, _) -> if lType == rType then TypedExp i "boolean" else error "Schlechter Operator" 
-											        where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
-addInfix map  i@Infix{infixop="!=", lhs=l, rhs=r} = case (lType, rType) of
-													     ("char", "int") -> TypedExp i "boolean"
-													     ("int", "char") -> TypedExp i "boolean"
-													     (_, _) -> if lType == rType then TypedExp i "boolean" else error "Schlechter Operator" 
-											        where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
-addInfix map  i@Infix{infixop="&&", lhs=l, rhs=r} = case (lType, rType) of
-													     ("boolean", "boolean") -> TypedExp i "boolean"
+addInfix clMap table  i@Infix{infixop="==", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of
+														   ("char", "int") -> TypedExp (Infix "==" typedL typedR) "boolean"
+														   ("int", "char") -> TypedExp (Infix "==" typedL typedR) "boolean"
+														   ("boolean", "boolean") -> TypedExp (Infix "==" typedL typedR) "boolean"
+														   (_, _) -> if (exptype typedL) == (exptype typedR) then TypedExp (Infix "==" typedL typedR) "boolean" else error "Schlechter Operator" 
+													  where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
+addInfix clMap  table  i@Infix{infixop="!=", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of
+														   ("char", "int") -> TypedExp (Infix "!=" typedL typedR) "boolean"
+														   ("int", "char") -> TypedExp (Infix "!=" typedL typedR) "boolean"
+														   ("boolean", "boolean") -> TypedExp (Infix "!=" typedL typedR) "boolean"
+														   (_, _) -> if (exptype typedL) == (exptype typedR) then TypedExp (Infix "!=" typedL typedR) "boolean" else error "Schlechter Operator" 
+													  where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
+addInfix clMap  table  i@Infix{infixop="&&", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of
+														   ("boolean", "boolean") -> TypedExp (Infix "&&" typedL typedR) "boolean"
+														   (_, _) -> error "Schlechter Operator"
+													  where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
+addInfix clMap  table  i@Infix{infixop="||", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of
+													     ("boolean", "boolean") -> TypedExp (Infix "||" typedL typedR) "boolean"
 													     (_, _) -> error "Schlechter Operator"
-											        where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
-addInfix map  i@Infix{infixop="||", lhs=l, rhs=r} = case (lType, rType) of
-													     ("boolean", "boolean") -> TypedExp i "boolean"
-													     (_, _) -> error "Schlechter Operator"
-											        where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
+											        where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
 --arithmetische Operatoren
-addInfix map  i@Infix{infixop="+", lhs=l, rhs=r} = case (lType, rType) of 
-													    ("char", "char") -> TypedExp i "int"
-													    ("char", "int") -> TypedExp i "int"
-													    ("int", "char") -> TypedExp i "int"
-													    ("int", "int") -> TypedExp i "int"
+addInfix clMap  table  i@Infix{infixop="+", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix "+" typedL typedR) "int"
+													    ("char", "int") -> TypedExp (Infix "+" typedL typedR) "int"
+													    ("int", "char") -> TypedExp (Infix "+" typedL typedR) "int"
+													    ("int", "int") -> TypedExp (Infix "+" typedL typedR) "int"
 													    --("String", "String") -> TypedExp i "String" ???
 													    (_, _) -> error "Schlechter Operator"
-											       where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))										
-addInfix map  i@Infix{infixop="-", lhs=l, rhs=r} = case (lType, rType) of 
-													    ("char", "char") -> TypedExp i "int"
-													    ("char", "int") -> TypedExp i "int"
-													    ("int", "char") -> TypedExp i "int"
-													    ("int", "int") -> TypedExp i "int"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))										
+addInfix clMap  table  i@Infix{infixop="-", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix "-" typedL typedR) "int"
+													    ("char", "int") -> TypedExp (Infix "-" typedL typedR) "int"
+													    ("int", "char") -> TypedExp (Infix "-" typedL typedR) "int"
+													    ("int", "int") -> TypedExp (Infix "-" typedL typedR) "int"
 													    (_, _) -> error "Schlechter Operator"
-											       where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
-addInfix map  i@Infix{infixop="*", lhs=l, rhs=r} = case (lType, rType) of 
-													    ("char", "char") -> TypedExp i "int"
-													    ("char", "int") -> TypedExp i "int"
-													    ("int", "char") -> TypedExp i "int"
-													    ("int", "int") -> TypedExp i "int"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
+addInfix clMap  table  i@Infix{infixop="*", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix "*" typedL typedR) "int"
+													    ("char", "int") -> TypedExp (Infix "*" typedL typedR) "int"
+													    ("int", "char") -> TypedExp (Infix "*" typedL typedR) "int"
+													    ("int", "int") -> TypedExp (Infix "*" typedL typedR) "int"
 													    (_, _) -> error "Schlechter Operator"
-											       where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))										
-addInfix map  i@Infix{infixop="/", lhs=l, rhs=r} = case (lType, rType) of 
-													    ("char", "char") -> TypedExp i "int"
-													    ("char", "int") -> TypedExp i "int"
-													    ("int", "char") -> TypedExp i "int"
-													    ("int", "int") -> TypedExp i "int"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))										
+addInfix clMap  table  i@Infix{infixop="/", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix "/" typedL typedR) "int"
+													    ("char", "int") -> TypedExp (Infix "/" typedL typedR) "int"
+													    ("int", "char") -> TypedExp (Infix "/" typedL typedR) "int"
+													    ("int", "int") -> TypedExp (Infix "/" typedL typedR) "int"
 													    (_, _) -> error "Schlechter Operator"
-											       where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
-addInfix map  i@Infix{infixop="<", lhs=l, rhs=r} = case (lType, rType) of 
-													    ("char", "char") -> TypedExp i "int"
-													    ("char", "int") -> TypedExp i "int"
-													    ("int", "char") -> TypedExp i "int"
-													    ("int", "int") -> TypedExp i "int"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
+addInfix clMap  table  i@Infix{infixop="<", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix "<" typedL typedR) "boolean"
+													    ("char", "int") -> TypedExp (Infix "<" typedL typedR) "boolean"
+													    ("int", "char") -> TypedExp (Infix "<" typedL typedR) "boolean"
+													    ("int", "int") -> TypedExp (Infix "<" typedL typedR) "boolean"
 													    (_, _) -> error "Schlechter Operator"
-											       where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))	
-addInfix map  i@Infix{infixop=">", lhs=l, rhs=r} = case (lType, rType) of 
-													    ("char", "char") -> TypedExp i "int"
-													    ("char", "int") -> TypedExp i "int"
-													    ("int", "char") -> TypedExp i "int"
-													    ("int", "int") -> TypedExp i "int"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))	
+addInfix clMap  table  i@Infix{infixop=">", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix ">" typedL typedR) "boolean"
+													    ("char", "int") -> TypedExp (Infix ">" typedL typedR) "boolean"
+													    ("int", "char") -> TypedExp (Infix ">" typedL typedR) "boolean"
+													    ("int", "int") -> TypedExp (Infix ">" typedL typedR) "boolean"
 													    (_, _) -> error "Schlechter Operator"
-											       where (lType, rType) = (exptype (addExp map  (l)), exptype (addExp map  (r)))
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))
+addInfix clMap  table  i@Infix{infixop="<=", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix "<=" typedL typedR) "boolean"
+													    ("char", "int") -> TypedExp (Infix "<=" typedL typedR) "boolean"
+													    ("int", "char") -> TypedExp (Infix "<=" typedL typedR) "boolean"
+													    ("int", "int") -> TypedExp (Infix "<=" typedL typedR) "boolean"
+													    (_, _) -> error "Schlechter Operator"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))	
+addInfix clMap  table  i@Infix{infixop=">=", lhs=l, rhs=r} = case ((exptype typedL), (exptype typedR)) of 
+													    ("char", "char") -> TypedExp (Infix ">=" typedL typedR) "boolean"
+													    ("char", "int") -> TypedExp (Infix ">=" typedL typedR) "boolean"
+													    ("int", "char") -> TypedExp (Infix ">=" typedL typedR) "boolean"
+													    ("int", "int") -> TypedExp (Infix ">=" typedL typedR) "boolean"
+													    (_, _) -> error "Schlechter Operator"
+											       where (typedL, typedR) = ((addExp clMap table (l)), (addExp clMap table  (r)))												   
 
---addInstVar :: (M.Map String Typename) -> Exp -> Exp
---addInstVar	map (InstanceVar instExp varName) = InstanceVar (addExp map instExp) (M.lookup 									   
+addInstVar :: ClassMap -> (M.Map String Typename) -> Exp -> Exp
+addInstVar clMap table (InstanceVar instExp varName) = if (snd result) == Nothing then error "Klasse hat kein solches Feld" else TypedExp (InstanceVar (fst result) varName) (fromJust (snd result)) 
+													   where result = (typedInstExp ,(M.lookup varName (classFields (exptype (addExp clMap table instExp)) clMap))) where typedInstExp = (addExp clMap table instExp)
+													   
 
 
-addCast :: (M.Map String Typename) -> Exp -> Exp
-{-addCast map (Cast newType exp) = if newType == (exptype typedExp) then (TypedExp (Case newType typedExp) newType)
-                                 else (case (newType, (exptype typedExp)) of
-							               ("int", "char") -> TypedExp (Cast newType typedExp) newType
-									       ("char", "int") -> TypedExp (Cast newType typedExp) newType
-                                           (_, _) -> error "Kann nicht gecasted werden")
-                                 where typedExp = (addExp exp)-}
-addCast map (Cast newType exp) = case (newType, (exptype typedExp)) of
+addCast :: ClassMap -> (M.Map String Typename) -> Exp -> Exp
+addCast clMap table (Cast newType exp) = case (newType, (exptype typedExp)) of
                                       ("int", "char") -> (TypedExp (Cast newType typedExp) newType)
                                       ("char", "int") -> (TypedExp (Cast newType typedExp) newType)
-                                      (_, _) -> error "Kann nicht gecasted werden"
-                                 where typedExp = addExp map exp									   
+                                      (_, _) -> if newType == (exptype typedExp) then (TypedExp (Cast newType typedExp) newType) else error "Kann nicht gecasted werden"
+                                 where typedExp = addExp clMap table exp									   
 
 {-addInstOf :: (M.Map String Typename) -> Exp -> Exp
-addInstOf map (InstanceOf instExp ofName) = case ((exptype typedInstExp), (lookupResult)) of
+addInstOf table (InstanceOf instExp ofName) = case ((exptype typedInstExp), (lookupResult)) of
                                                  ("int", _) -> error "Benötigt Referenz und kein primitive." 
 												 ("char", _) -> error "Benötigt Referenz und kein primitive."
 												 (_, "int"-}
 												 
 												 
+addInstOf :: ClassMap -> (M.Map String Typename) -> Exp -> Exp
+addInstOf clMap table (InstanceOf instExp ofName) = if (M.lookup (exptype typedInstExp) clMap) == Nothing then error "Primitive Datentypen nicht erlaubt"
+													else (if ((M.lookup ofName clMap) == Nothing) then error "Klassenname nicht gefunden"
+														  else TypedExp (InstanceOf typedInstExp ofName) "boolean")
+													where typedInstExp = (addExp clMap table instExp)
+														 
 												 
 												 
 												 
 												 
-												 
-addStatementExp :: (M.Map String Typename) -> StatementExp -> StatementExp	
-addStatementExp map a@(Assign _ _ _) = addAssign map a
---addStatementExp map mc@(MethodCall _ _ _) = addMethodCall map mc
---addStatementExp map new@(New _ _) = addNew map new
-addStatementExp map pre@(PrefixUnary _ _) = addPrefix map pre
-addStatementExp map post@(PostfixUnary _ _) = addPostfix map post
+addStatementExp :: ClassMap -> (M.Map String Typename) -> StatementExp -> StatementExp	
+addStatementExp clMap table a@(Assign _ _ _) = addAssign clMap table a
+--addStatementExp table mc@(MethodCall _ _ _) = addMethodCall table mc
+--addStatementExp table new@(New _ _) = addNew table new
+addStatementExp clMap table pre@(PrefixUnary _ _) = addPrefix clMap table pre
+addStatementExp clMap table post@(PostfixUnary _ _) = addPostfix clMap table post
 
 
 
-addAssign :: (M.Map String Typename) -> StatementExp -> StatementExp
+addAssign :: ClassMap -> (M.Map String Typename) -> StatementExp -> StatementExp
 --LocalOrFieldVar
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "=") = (if (exptype typedVar) == (exptype typedRHS) then (Assign typedVar typedRHS "=")
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "=") = (if (exptype typedVar) == (exptype typedRHS) then (Assign typedVar typedRHS "=")
                                                           else error "Kann nicht unterschiedliche Typen zuweisen.") 
-														  where typedVar = (addExp map var)
-														        typedRHS = (addExp map rhs)
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "+=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = (addExp clMap table var)
+														        typedRHS = (addExp clMap table rhs)
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "+=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "-=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "-=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "*=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "*=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "/=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "/=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "%=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "%=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "<<=")= case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "<<=")= case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs ">>=")= case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs ">>=")= case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs ">>>=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs ">>>=")=case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "^=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "^=")=case ((exptype typedVar),(exptype typedRHS)) of
 															 ("boolean", "boolean") -> (TypedStatementExp (Assign typedVar typedRHS "^=") "boolean")
 															 (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "|=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "|=")=case ((exptype typedVar),(exptype typedRHS)) of
 															 ("boolean", "boolean") -> (TypedStatementExp (Assign typedVar typedRHS "|=") "boolean")
 															 (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(LocalOrFieldVar _) rhs "&=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(LocalOrFieldVar _) rhs "&=")=case ((exptype typedVar),(exptype typedRHS)) of
 															 ("boolean", "boolean") -> (TypedStatementExp (Assign typedVar typedRHS "&=") "boolean")
 															 (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs	
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs	
 --InastanceVar																
-addAssign map (Assign var@(InstanceVar _  _) rhs "=") = if (exptype typedVar) == (exptype typedRHS) then (Assign typedVar typedRHS "=")
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "=") = if (exptype typedVar) == (exptype typedRHS) then (Assign typedVar typedRHS "=")
                                                         else error "Kann nicht unterschiedliche Typen zuweisen."                                         
-														  where typedVar = (addExp map var)
-														        typedRHS = (addExp map rhs)
-addAssign map (Assign var@(InstanceVar _  _) rhs "+=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = (addExp clMap table var)
+														        typedRHS = (addExp clMap table rhs)
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "+=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "+=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "-=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "-=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "-=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "*=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "*=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "*=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "/=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "/=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "/=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "%=") = case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "%=") = case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "%=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "<<=")= case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "<<=")= case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS "<<=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs ">>=")= case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs ">>=")= case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs ">>>=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs ">>>=")=case ((exptype typedVar),(exptype typedRHS)) of
 															   ("char", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "char")
 															   ("int", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "int")
 															   ("int", "char") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "int")
 															   ("char", "int") -> (TypedStatementExp (Assign typedVar typedRHS ">>>=") "int")
 															   (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "^=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "^=")=case ((exptype typedVar),(exptype typedRHS)) of
 															 ("boolean", "boolean") -> (TypedStatementExp (Assign typedVar typedRHS "^=") "boolean")
 															 (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "|=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "|=")=case ((exptype typedVar),(exptype typedRHS)) of
 															 ("boolean", "boolean") -> (TypedStatementExp (Assign typedVar typedRHS "|=") "boolean")
 															 (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs
-addAssign map (Assign var@(InstanceVar _  _) rhs "&=")=case ((exptype typedVar),(exptype typedRHS)) of
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs
+addAssign clMap  table (Assign var@(InstanceVar _  _) rhs "&=")=case ((exptype typedVar),(exptype typedRHS)) of
 															 ("boolean", "boolean") -> (TypedStatementExp (Assign typedVar typedRHS "&=") "boolean")
 															 (_, _) -> error "Zuweisung von diesen Typen nicht erlaubt."
-														  where typedVar = addExp map var
-														        typedRHS = addExp map rhs	
-addAssign _ _ = error "Assign nur zu Variable"																
+														  where typedVar = addExp clMap table var
+														        typedRHS = addExp clMap table rhs	
+addAssign _ _ _ = error "Assign nur zu Variable"																
 
 {-addMethodCall :: (M.Map String Typename) -> StatementExp -> StatementExp
-addMethodCall map (MethodCall inst methodName params)-}
+addMethodCall table (MethodCall inst methodName params)-}
 
 
-addPrefix :: (M.Map String Typename) -> StatementExp -> StatementExp
-addPrefix map (PrefixUnary "++" incExp) = case (exptype typedIncExp) of
+addPrefix :: ClassMap -> (M.Map String Typename) -> StatementExp -> StatementExp
+addPrefix clMap table (PrefixUnary "++" incExp) = case (exptype typedIncExp) of
 											   ("int") -> TypedStatementExp (PrefixUnary "++" typedIncExp) "int"
 											   ("char") -> TypedStatementExp (PrefixUnary "++" typedIncExp) "int"
 											   _ -> error "Kann nicht inkrementiert werden"
-										  where typedIncExp = addExp map incExp
-addPrefix map (PrefixUnary "--" decExp) = case (exptype typedDecExp) of
+										  where typedIncExp = addExp clMap table incExp
+addPrefix clMap table (PrefixUnary "--" decExp) = case (exptype typedDecExp) of
 											   ("int") -> TypedStatementExp (PrefixUnary "--" typedDecExp) "int"
 											   ("char") -> TypedStatementExp (PrefixUnary "--" typedDecExp) "int"
 											   _ -> error "Kann nicht dekrementiert werden"
-										  where typedDecExp = addExp map decExp
+										  where typedDecExp = addExp clMap table decExp
 										  
-addPostfix :: (M.Map String Typename) -> StatementExp -> StatementExp
-addPostfix map (PostfixUnary "++" incExp) = case (exptype typedIncExp) of
+addPostfix :: ClassMap -> (M.Map String Typename) -> StatementExp -> StatementExp
+addPostfix clMap table (PostfixUnary "++" incExp) = case (exptype typedIncExp) of
 											     ("int") -> TypedStatementExp (PostfixUnary "++" typedIncExp) "int"
 											     ("char") -> TypedStatementExp (PostfixUnary "++" typedIncExp) "int"
 											     _ -> error "Kann nicht inkrementiert werden"
-										    where typedIncExp = addExp map incExp
-addPostfix map (PostfixUnary "--" decExp) = case (exptype typedDecExp) of
+										    where typedIncExp = addExp clMap table incExp
+addPostfix clMap table (PostfixUnary "--" decExp) = case (exptype typedDecExp) of
 											     ("int") -> TypedStatementExp (PostfixUnary "--" typedDecExp) "int"
 											     ("char") -> TypedStatementExp (PostfixUnary "--" typedDecExp) "int"
 											     _ -> error "Kann nicht dekrementiert werden"
-										    where typedDecExp = addExp map decExp										  
+										    where typedDecExp = addExp clMap table decExp										  
 										  
 										  
 fromJust :: (Maybe a) -> a
