@@ -3,8 +3,8 @@ import System.Environment
 import Scanner
 import Abs
 import Parser
-import Types
 import Translation
+import TypeCheck
 
 main = do
   [arg] <- getArgs
