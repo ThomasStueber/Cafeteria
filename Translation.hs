@@ -10,7 +10,7 @@ import Abs
 
 
 
-type AbstractProg = ((IndexLookup Command), Int, [[Word8]], (TagLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), (TagLookup Reference), VarManager, [Word8])
+type AbstractProg = ((IndexLookup Command), Int, [[Word8]], (TagLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), [[Word8]], (IndexLookup Int), (TagLookup Reference), VarManager, [Word8], [([Word8], (IndexLookup Command))])
 
 ap_getCode :: AbstractProg -> (IndexLookup Command)           -- get Bytecode Commands
 ap_getPos :: AbstractProg -> Int                              -- get current Position
@@ -39,34 +39,36 @@ ap_getCPDoubleLookup :: AbstractProg -> (IndexLookup Int)     -- get Double Cons
 ap_getNamePool :: AbstractProg -> (TagLookup Reference)       -- get Name Pool
 ap_getVarManager :: AbstractProg -> VarManager                -- get Variable Binding Manager
 ap_getAccFlags :: AbstractProg -> [Word8]                     -- get Access Flags
+ap_getMethodPool :: AbstractProg -> [([Word8], (IndexLookup Command))]               -- get Method Pool
 
-ap_getCode (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cmd
-ap_getPos (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = pos
-ap_getCPStr (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpS
-ap_getCPStrLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luS
-ap_getCPClass (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpC
-ap_getCPClassLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luC
-ap_getCPType (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpT
-ap_getCPTypeLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luT
-ap_getCPField (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpFd
-ap_getCPFieldLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luFd
-ap_getCPMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpM
-ap_getCPMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luM
-ap_getCPIFMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpIM
-ap_getCPIFMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luIM
-ap_getCPIndex (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpSI
-ap_getCPIndexLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luSI
-ap_getCPInt (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpI
-ap_getCPIntLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luI
-ap_getCPFloat (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpF
-ap_getCPFloatLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luF
-ap_getCPLong (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpL
-ap_getCPLongLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luL
-ap_getCPDouble (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = cpD
-ap_getCPDoubleLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = luD
-ap_getNamePool (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = np
-ap_getVarManager (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = vm
-ap_getAccFlags (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) = accF
+ap_getCode (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cmd
+ap_getPos (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = pos
+ap_getCPStr (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpS
+ap_getCPStrLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luS
+ap_getCPClass (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpC
+ap_getCPClassLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luC
+ap_getCPType (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpT
+ap_getCPTypeLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luT
+ap_getCPField (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpFd
+ap_getCPFieldLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luFd
+ap_getCPMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpM
+ap_getCPMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luM
+ap_getCPIFMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpIM
+ap_getCPIFMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luIM
+ap_getCPIndex (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpSI
+ap_getCPIndexLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luSI
+ap_getCPInt (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpI
+ap_getCPIntLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luI
+ap_getCPFloat (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpF
+ap_getCPFloatLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luF
+ap_getCPLong (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpL
+ap_getCPLongLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luL
+ap_getCPDouble (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = cpD
+ap_getCPDoubleLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = luD
+ap_getNamePool (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = np
+ap_getVarManager (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = vm
+ap_getAccFlags (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = accF
+ap_getMethodPool (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = mp
 
 ap_setCode :: AbstractProg -> (IndexLookup Command) -> AbstractProg           -- set Bytecode Commands
 ap_setPos :: AbstractProg -> Int -> AbstractProg                              -- set current Position
@@ -95,42 +97,57 @@ ap_setCPDoubleLookup :: AbstractProg -> (IndexLookup Int) -> AbstractProg     --
 ap_setNamePool :: AbstractProg -> (TagLookup Reference) -> AbstractProg       -- set Name Pool
 ap_setVarManager :: AbstractProg -> VarManager -> AbstractProg                -- set Variable Binding Manager
 ap_setAccFlags :: AbstractProg -> [Word8] -> AbstractProg                     -- set Access Flags
+ap_setMethodPool :: AbstractProg -> [([Word8], (IndexLookup Command))] -> AbstractProg                 -- set Method Pool
 
-ap_setCode (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (x, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setPos (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, x, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPStr (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, x, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPStrLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, x, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPClass (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, x, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPClassLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, x, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPType (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, x, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPTypeLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, x, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPField (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, x, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPFieldLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, x, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, x, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, x, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPIFMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, x, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPIFMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, x, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPIndex (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, x, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPIndexLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, x, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPInt (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, x, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPIntLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, x, cpF, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPFloat (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, x, luF, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPFloatLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, x, cpL, luL, cpD, luD, np, vm, accF)
-ap_setCPLong (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, x, luL, cpD, luD, np, vm, accF)
-ap_setCPLongLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, x, cpD, luD, np, vm, accF)
-ap_setCPDouble (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, x, luD, np, vm, accF)
-ap_setCPDoubleLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, x, np, vm, accF)
-ap_setNamePool (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, x, vm, accF)
-ap_setVarManager (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, x, accF)
-ap_setAccFlags (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, x)
+ap_setCode (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (x, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setPos (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, x, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPStr (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, x, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPStrLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, x, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPClass (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, x, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPClassLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, x, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPType (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, x, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPTypeLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, x, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPField (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, x, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPFieldLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, x, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, x, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, x, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPIFMethod (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, x, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPIFMethodLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, x, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPIndex (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, x, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPIndexLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, x, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPInt (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, x, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPIntLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, x, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPFloat (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, x, luF, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPFloatLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, x, cpL, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPLong (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, x, luL, cpD, luD, np, vm, accF, mp)
+ap_setCPLongLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, x, cpD, luD, np, vm, accF, mp)
+ap_setCPDouble (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, x, luD, np, vm, accF, mp)
+ap_setCPDoubleLookup (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, x, np, vm, accF, mp)
+ap_setNamePool (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, x, vm, accF, mp)
+ap_setVarManager (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, x, accF, mp)
+ap_setAccFlags (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, x, mp)
+ap_setMethodPool (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) x = (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, x)
 
-ap_new = (NewIndexLookup, (0 :: Int), [], NewTagLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, NewTagLookup, NewVarManager, [0, 0])   -- new (empty) AbstactProg
+ap_new = (NewIndexLookup, (0 :: Int), [], NewTagLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, [], NewIndexLookup, NewTagLookup, NewVarManager, [0, 0], [])   -- new (empty) AbstactProg
+
+ap_reset :: AbstractProg -> AbstractProg        -- reset AbstractProg for new (Method) Code Block
+ap_reset (cmd, pos, cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, np, vm, accF, mp) = (NewIndexLookup, (0 :: Int), cpS, luS, cpC, luC, cpT, luT, cpFd, luFd, cpM, luM, cpIM, luIM, cpSI, luSI, cpI, luI, cpF, luF, cpL, luL, cpD, luD, NewTagLookup, NewVarManager, accF, mp)
 
 ap_incPos :: AbstractProg -> AbstractProg          -- increment current Position
 ap_incPos ap = ap_setPos ap ((ap_getPos ap) + 1)
 
 ap_addCmd ::  AbstractProg -> Command -> AbstractProg                               -- add new Codeline
 ap_addCmd ap c = ap_incPos (ap_setCode ap ((ap_getCode ap) !# (ap_getPos ap) # c))
+
+ap_saveMethod :: AbstractProg -> [Word8] -> String -> String -> AbstractProg
+ap_saveMethod ap accFlags n descr = let ref_cp_l = addConstStr n CTg_Utf8 (ap_getCPStr ap) (ap_getCPStrLookup ap)
+                                    in let newAP = ap_setCPStrLookup (ap_setCPStr ap (snd3 ref_cp_l)) (trd3 ref_cp_l)
+                                       in let ref_cp_l2 = addConstStr descr CTg_Utf8 (ap_getCPStr newAP) (ap_getCPStrLookup newAP)
+                                          in let newAP2 = ap_setCPStrLookup (ap_setCPStr newAP (snd3 ref_cp_l2)) (trd3 ref_cp_l2)
+                                             in let ref_cp_l3 = addConstStr "Code" CTg_Utf8 (ap_getCPStr newAP2) (ap_getCPStrLookup newAP2)
+                                                in let newAP3 = ap_setCPStrLookup (ap_setCPStr newAP2 (snd3 ref_cp_l3)) (trd3 ref_cp_l3)
+                                                   in let signature = accFlags ++ (fromShort (useValueOf (fst3 ref_cp_l))) ++ (fromShort (useValueOf (fst3 ref_cp_l2))) ++ [1] ++ (fromShort (useValueOf (fst3 ref_cp_l3))) ++ [2, 0] ++ (fromShort (useValueOf (getSizeV (ap_getVarManager newAP3))))
+                                                      in ap_reset (ap_setMethodPool newAP3 ((ap_getMethodPool newAP3) ++ [(signature, (ap_getCode newAP3))]))
 
 
 data Reference = RefToV_I Int | RefToC_I Int | RefToV_F Int | RefToC_F Int | RefToV_L Int | RefToC_L Int | RefToV_D Int | RefToC_D Int | RefToV_A Int | RefToC_A Int | RefToC_Class Int | UndefConst | RefVal_m1 | RefVal_0 | RefVal_1 | RefVal_2 | RefVal_3 | RefVal_4 | RefVal_5 | StackRef | CodeRef Int | NullRef | UnusedName deriving Show
@@ -246,16 +263,31 @@ loopConversion x = x
 modToAF :: [Modifier] -> [AccessFlag]
 modToAF (Public : xs) = Acc_Public : (modToAF xs)
 modToAF (Final : xs) = Acc_Final : (modToAF xs)
-modToAF (Private : xs) = modToAF xs
-modToAF (Static : xs) = modToAF xs
-modToAF (Protected : xs) = modToAF xs
+modToAF (Private : xs) = Acc_Private : (modToAF xs)
+modToAF (Static : xs) = Acc_Static : (modToAF xs)
+modToAF (Protected : xs) = Acc_Protected : (modToAF xs)
 modToAF (Abstract : xs) = Acc_Abstract : (modToAF xs)
+modToAF [] = []
+
+
+typeDescriptor :: [String] -> String -> String
+typeDescriptor tParams tReturn = let reduce "int" = "I"
+                                     reduce "long" = "J"
+                                     reduce "float" = "F"
+                                     reduce "double" = "D"
+                                     reduce "bool" = "Z"
+                                     reduce "byte" = "B"
+                                     reduce "short" = "S"
+                                     reduce "char" = "C"
+                                     reduce "void" = "V"
+                                     reduce reftype = "L" ++ reftype ++ ";"
+                                 in "(" ++ (foldl (++) "" (map reduce tParams)) ++ ")" ++ (reduce tReturn)
 
 
 -- translate ClassDef
 
 translateC :: ClassDef -> AbstractProg
-translateC (ClassDef n mod funcs fields ctors blocks) = let apC = ap_setCPClassLookup (ap_setCPClass (ap_setCPStr (ap_setCPStrLookup ap_new (NewTagLookup !% n % 0)) [(fromString n)]) ([[(translateConstTag CTg_Class), 0, 0]])) (NewIndexLookup !# 0 # 0)
+translateC (ClassDef n mod funcs fields ctors blocks) = let apC = ap_setCPClassLookup (ap_setCPClass (ap_setCPStr (ap_setCPStrLookup ap_new (NewTagLookup !% n % 0)) [(translateConstTag CTg_Utf8) : (fromString n)]) ([[(translateConstTag CTg_Class), 0, 0]])) (NewIndexLookup !# 0 # 0)
                                                         in let apMod = (ap_setAccFlags apC (setAccessFlags (modToAF mod)))
                                                            in let apFld = translateFld fields apMod
                                                               in let apCtor = translateCtor ctors apFld
@@ -277,7 +309,12 @@ translateCtor [] ap = ap
 -- translate Methods 
 
 translateFunc :: [MemberFunction] -> AbstractProg -> AbstractProg
-translateFunc (f: fs) ap = ap --
+translateFunc ((MemberFunction t n p m b) : fs) ap = let tr (x : xs) ap_ = tr xs (popToVar (fst (translateS (LocalVarDecl (fst x) (snd x) Nothing False) ap_)) (snd x) (fst x))
+                                                         tr [] ap_ = ap_
+                                                     in let newAP = tr (reverse p) ap
+                                                        in let af = setAccessFlags (modToAF m)
+                                                           in let descr = typeDescriptor (map fst p) t
+                                                              in ap_saveMethod (fst (translateS b newAP)) af n descr
 translateFunc [] ap = ap
 
 -- translate TypedExp into AbstractProg and return Reference to evaluation
