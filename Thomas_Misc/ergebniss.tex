@@ -1,0 +1,167 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Structured General Purpose Assignment
+% LaTeX Template
+%
+% This template has been downloaded from:
+% http://www.latextemplates.com
+%
+% Original author:
+% Ted Pavlic (http://www.tedpavlic.com)
+%
+% Note:
+% The \lipsum[#] commands throughout this template generate dummy text
+% to fill the template out. These commands should all be removed when 
+% writing assignment content.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\usepackage{fancyhdr} % Required for custom headers
+\usepackage{lastpage} % Required to determine the last page for the footer
+\usepackage{extramarks} % Required for headers and footers
+\usepackage{graphicx} % Required to insert images
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{ngerman}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{marvosym}
+\usepackage{mathtools}
+\usepackage{stmaryrd}
+\usepackage{amsthm}
+\usepackage{bussproofs}
+\usepackage[utf8]{inputenc}
+% Margins
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in 
+
+\linespread{1.1} % Line spacing
+
+% Set up the header and footer
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName} % Top left header
+\chead{\hmwkClass\ (\hmwkClassInstructor): \hmwkTitle} % Top center header
+\rhead{\firstxmark} % Top right header
+\lfoot{\lastxmark} % Bottom left footer
+\cfoot{} % Bottom center footer
+\rfoot{Seite\ \thepage\ von\ \pageref{LastPage}} % Bottom right footer
+\renewcommand\headrulewidth{0.4pt} % Size of the header rule
+\renewcommand\footrulewidth{0.4pt} % Size of the footer rule
+
+\setlength\parindent{0pt} % Removes all indentation from paragraphs
+
+%----------------------------------------------------------------------------------------
+%	DOCUMENT STRUCTURE COMMANDS
+%	Skip this unless you know what you're doing
+%----------------------------------------------------------------------------------------
+
+% Header and footer for when a page split occurs within a problem environment
+\newcommand{\enterProblemHeader}[1]{
+  \nobreak\extramarks{#1}{#1 continued on next page\ldots}\nobreak
+  \nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak
+}
+
+% Header and footer for when a page split occurs between problem environments
+\newcommand{\exitProblemHeader}[1]{
+  \nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak
+  \nobreak\extramarks{#1}{}\nobreak
+}
+
+\setcounter{secnumdepth}{0} % Removes default section numbers
+\newcounter{homeworkProblemCounter} % Creates a counter to keep track of the number of problems
+
+\newcommand{\homeworkProblemName}{}
+\newenvironment{homeworkProblem}[1][Aufgabe \arabic{homeworkProblemCounter}]{ % Makes a new environment called homeworkProblem which takes 1 argument (custom name) but the default is "Problem #"
+  \stepcounter{homeworkProblemCounter} % Increase counter for number of problems
+  \renewcommand{\homeworkProblemName}{#1} % Assign \homeworkProblemName the name of the problem
+  \section{\homeworkProblemName} % Make a section in the document with the custom problem count
+  \enterProblemHeader{\homeworkProblemName} % Header and footer within the environment
+}{
+  \exitProblemHeader{\homeworkProblemName} % Header and footer after the environment
+}
+
+\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument
+  \noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside
+}
+
+\newcommand{\homeworkSectionName}{}
+\newenvironment{homeworkSection}[1]{ % New environment for sections within homework problems, takes 1 argument - the name of the section
+  \renewcommand{\homeworkSectionName}{#1} % Assign \homeworkSectionName to the name of the section from the environment argument
+  \subsection{\homeworkSectionName} % Make a subsection with the custom name of the subsection
+  \enterProblemHeader{\homeworkProblemName\ [\homeworkSectionName]} % Header and footer within the environment
+}{
+  \enterProblemHeader{\homeworkProblemName} % Header and footer after the environment
+}
+
+%----------------------------------------------------------------------------------------
+%	NAME AND CLASS SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\hmwkTitle}{Zusammenfassung der Ergebnisse} % Assignment title
+\newcommand{\hmwkDueDate}{} % Due date
+\newcommand{\hmwkClass}{Compilerbau} % Course/class
+\newcommand{\hmwkClassTime}{} % Class/lecture time
+\newcommand{\hmwkClassInstructor}{Plümicke} % Teacher/lecturer
+\newcommand{\hmwkAuthorName}{Thomas Stüber} % Your name
+
+\newcommand{\sembrac}[3]{\text{$[\![#1]\!]_{#2}^{#3}$}}
+\newcommand{\backModels}{\text{\reflectbox{$\models$}}}
+\newcommand{\eqmodels}{\text{\backModels $\models$}}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{
+  \vspace{2in}
+  \textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+  \vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+  \vspace{3in}
+}
+
+\author{\textbf{\hmwkAuthorName}}
+\date{Donnerstag, 14. Februar 2015} % Insert date here if you want it to appear below your name
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+  
+  \maketitle
+  
+  %----------------------------------------------------------------------------------------
+  %	TABLE OF CONTENTS
+  %----------------------------------------------------------------------------------------
+  
+  %\setcounter{tocdepth}{1} % Uncomment this line if you don't want subsections listed in the ToC
+  
+  \newpage
+  %\tableofcontents
+  %\newpage
+  
+  %----------------------------------------------------------------------------------------
+  %	PROBLEM 1
+  %----------------------------------------------------------------------------------------
+  
+  % To have just one problem per page, simply put a \clearpage after each problem
+  
+  \subsection{Allgemein}
+  Mein Teil des Projekts war die Implementierung von Scanner und Parser. Dabei wurde mit der Programmiersprache Haskell und den Scanner- bzw. Parsergeneratoren ``alex'' und ``happy'' gearbeitet. Den groben zeitlichen Verlauf können sie dem Verlauf des Github-Repository oder der Präsentation entnehmen.
+  \subsection{Scanner}
+  Der Scanner wurde in kurzer Zeit implementiert. Alle Schlüsselwörter und Operatoren stellen selbst schon die zugehörigen regulären Ausdrücke dar. Es mussten etwas aufwendigere reguläre Ausdrücke für Literale und Bezeichner geschrieben werden, so dass Binär-, Oktal- und Hexliterale, sowie Unterstriche in Literalen, unterstützt werden. Strings stellten ein größeren Problem dar, da keine einfache Regel aufgestellt werden konnte die sich von escapeten Anführungszeichen nicht ``verwirren'' ließ. Außerdem mussten Unicode-Characters sowie Escape-Sequenzen aufgelöst werden, was durch eine Hilfsfunktion durchgeführt wurde. Der Scanner erkennt zwei Sorten von lexikalischen Fehlern: Identifier die mit Zahlen beginnen und Zeichen die in Identifiern ganz verboten sind.
+  \subsection{Parser}
+  Der Parser war die eigentliche Aufgabe an meinem Teil des Projekts. Als Basis wurde hier ihre Grammatik verwendet, da diese schon einige Probleme behob die ich mit eigenen Grammatiken hatte, etwa dem Dangling-Else-Problem. Nun musste für unzählige Konstrukte der genaue Syntax ermittelt werden welche dann in Form einer möglichst konfliktfreien Grammatik dargestellt werden mussten. Dies für sich war schon schwer, was nicht leichter wurde durch die Typen der eizelnen Nichtterminale die man kaum im Überblick behalten konnte, weshalb man oft mit schwer zu findenden Typfehlern rechnen musste. Auch Cast-Expressions führten zu Konflikten, was durch einen Trick mit einer Hilfsfunktion gelöst wurde, so dass ein Nichtterminal wiederverwendet werden konnte das eigentlich für andere Dinge gedacht war. Deklerationen von mehreren Variablen in einem Statement wurden entzuckert zu mehreren einzelnen Deklerationen. Operatoren die Literale verarbeiten werden nicht in abstrakten Syntax übersetzt, stattdessen werden die resultierenden Ergebnisse direkt berechnet, so dass Constand-Folding implementiert wurde. Ob die linke Seite einer Zuweisung überhaupt als solche geeignet ist wird ebenso erkannt, wie die falsche Verwendung der vorhandenen Modifier. Wenn unerreichbarer Code vorhanden ist führt dies ebenfalls zu einer Fehlerausgabe.
+  \subsection{Abstrakter Syntax}
+  Der abstrakte Syntax ist eine einfache Erweiterung des von ihrer Vorlage, allerdings wurde diese deutlich Erweitert. Auch wurden Fehler ihres abstrakten Syntax behoben, etwa die falsche Darstellung der linken Seite von Zuweisungen. Alle Parameter von Datenkonstruktoren haben Namen erhalten, so dass der Haskell-Compiler automatische Zugriffsfunktionen generieren kann. Nachdem Datenkonstruktoren für alle untersützten Konstrukte implementiert waren wurde noch eine Pretty-Print-Funktion implementiert, die hauptsächlich zum einfachen Testen des Parsers gedacht war während des Entwicklungsprozesses, und den abstrakten Syntax als Baum darstellt. Diese Funktion war vermutlich für die anderen Teilnehmer auch relevant beim Untersuchen wie der abstrakte Syntax genau funktioniert.
+  \subsection{Ausblick}
+  Der Scanner enthält schon die Schlüsselwörter und Operatoren die Java momentan anbietet, hier muss nur eventuell für Fließkommaliterale nachgebessert werden. Weitere Features im Parser lassen sich großteils leicht implementieren wenn man erst mal eingearbeitet ist. Einzige Ausnahme wären hier wohl Generics und Wildcards, welche größere Umbauten verlangen, da sich dadurch die interne Repräsentation von Datentypen ändern müsste. Durch die Implementierung von ``happy'' dürfte Aufsetzen bei Fehlern kaum implementierbar sein, allerdings können die anderen Compilerteile vereinfacht werden wenn der Parser mehr Konstrukte entzuckert, etwa die vielen zusammengesetzten Zuweisungsoperatoren. Im großen ganzen hat mir das Projekt Spaß gemacht und ich würde an einer Folgeveranstaltung teilnehmen. 
+\end{document}

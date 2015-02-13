@@ -1,0 +1,111 @@
+\documentclass{beamer}
+\usetheme{default}  %% Themenwahl
+\usepackage{ngerman}
+\usepackage[utf8]{inputenc}
+
+\title{Präsentation der Projektergebnisse}
+\author{Thomas Stüber}
+\date{\today}
+
+\begin{document}
+  \maketitle
+  \section{Aufgaben}
+  \frame{\tableofcontents[currentsection]}
+  
+  \begin{frame} %%Eine Folie
+    \frametitle{Der Scanner} %%Folientitel
+    Kurze Wiederholung: der Scanner zerlegt die Eingabe in atomare Bausteine, sogenannte Lexeme oder Tokens. Die Regeln durch die diese erzeugt werden werden durch reguläre Ausdrücke beschrieben. 
+  \end{frame}
+  \begin{frame} %%Eine Folie
+    \frametitle{Der Parser} %%Folientitel
+    Kurze Wiederholung: der Parser verwendet die vom Scanner erzeugten Lexeme und überführt diese gemäß syntaktischen Regeln in einen abstrakten Syntax. Die entsprechenden Regeln werden durch eine kontextfreie Grammatik (mit Einschränkungen), notiert in Backus-Naur-Form, beschrieben.
+  \end{frame}
+  \begin{frame} %%Eine Folie
+    \frametitle{Aufgabe} %%Folientitel
+    Mit dem Scanner-Generator ``alex'' und dem Parsergenerator ``happy'' sollten beide eben genannten Teile eines Compilers implementiert werden für die Programmiersprache Java (mit einigen Einschränkungen). Dabei wurde hauptsächlich das beschrieben was Scanner und Parser tun sollen und am Kern der Funktionalität musste wenig selbst programmiert werden. Außerdem musste eine Zusammenfassung und eine Präsentation der Ergebnisse erstellt werden. 
+  \end{frame}
+  \begin{frame}
+    \frametitle{Zeitverlauf}
+    \begin{enumerate}
+     \item[7.12.] Erster Commit
+     \item[8.12.] Pretty Printer für abstrakten Syntax
+     \item[8.-13.] Weiteres arbeiten am Parser
+     \item[13.12.] Parser neu begonnen um einige Shift/Reduce Konflikte von Anfang an zu vermeiden, abstrakter Syntax erweitert
+     \item[13.-26.] Kleine Tests
+     \item[26.12.] Erste Version auf Basis von Prof. Plümickes Grammatik
+     \item[26.-30.] Hauptteil der Arbeit an abstraktem Syntax und Parser
+     \item[12.2.] Letzte Arbeiten, verschönern und aufräumen des Codes, kleinere Features, Präsentation, Dokumentation
+    \end{enumerate}
+
+  \end{frame}
+
+  
+  \section{Der Scanner}
+  \frame{\tableofcontents[currentsection]}
+  
+  \begin{frame} %%Eine Folie
+    \frametitle{Allgemein} %%Folientitel
+    \begin{enumerate}
+      \item Der Scanner wurde ohne die Vorlage entwickelt, da aus bloßen Tests der Funktionen von ``alex'' schnell ein vollständiger Scanner wurde.
+      \item Die regulären Ausdrücke für Schlüsselwörter und Operatoren waren jeweils einfach das Schlüsselwort oder der Operator selbst. 
+      \item Es wurde der Wrapper mit Positionsangaben verwendet.
+      \item Der Token-Datentyp besitzt für jedes Lexem einen Datenkonstruktor. Dieser erhält bei jedem Lexem die Positionsangabe und bei einigen Lexemen noch spezielle Werte, z.B. der String der als Stringliteral erkannt wurde.
+    \end{enumerate}
+  \end{frame}
+  \begin{frame} %%Eine Folie
+    \frametitle{Weitere Features} %%Folientitel
+    \begin{enumerate}
+     \item Umrechnen von Hex-, Oktal- und Binärliteralen.
+     \item Identifier die mit Zahlen beginnen führen zu Fehlern.
+     \item In String- und Charliteralen werden Escape-Sequenzen aufgelöst, insbesondere Unicode Zeichen.
+     \item Zeichen die für Bezeichner überhaupt nicht erlaubt sind führen zu einer entsprechenden Fehlermeldung.
+    \end{enumerate}
+  \end{frame}
+  \begin{frame} %%Eine Folie
+    \frametitle{Probleme} %%Folientitel
+    \begin{enumerate}
+      \item In Integerliteralen sind Unterstriche erlaubt, allerdings nicht an Anfang und Ende. Außerdem führt eine führende 0 zu einer Oktalzahl, mehr als eine führende 0 hingegen zu einem lexikalischen Fehler.
+      \item Das Auflösen von Escape-Sequenzen gestaltete sich schwierig.
+      \item In String darf \textbackslash '' vorkommen, was aber nicht das Ende des Strings markiert. Einfach einen regulären Ausdruck wie ''.*'' zu verwenden wird also fehlschlagen.
+    \end{enumerate}
+  \end{frame}
+  
+  \section{Der Parser}
+  \frame{\tableofcontents[currentsection]}
+  \begin{frame} %%Eine Folie
+    \frametitle{Allgemein} %%Folientitel
+    \begin{enumerate}
+      \item Der Parser wurde mehrfach zu großen Teilen entwickelt, der endgültige Parser basiert auf der Vorlage von Prof. Plümicke.
+      \item Es existiert eine Grammatik von Oracle an der sich die Entwickler der offiziellen Implementierung orientieren, diese ist aber weder LALR(1), noch in Backus-Naur-Form verfügbar. An ihr konnte ich aber gut prüfen ob ich Sprachkonstrukte vergessen habe die ich selbst einfach nicht kenne. 
+      \item Es wurde ein Parser ohne Monaden gewählt, da die Funktionalität bei der die Monaden mehr als syntaktischer Overhead wären über das Projekt hinaus gehen würden.
+    \end{enumerate}
+  \end{frame}
+  \begin{frame} %%Eine Folie
+    \frametitle{Weitere Features} %%Folientitel
+    \begin{enumerate}
+      \item Constand-Folding, Operatoren auf Literalen werden bereits vom Parser berechnet.
+      \item Einfache Fehlerverarbeitung, immerhin wird zwischen 7 verschiedenen Fehlern unterschieden.
+      \begin{enumerate}
+       \item Unerreichbarer Code wird erkannt.
+       \item Ungültige Modifier für das jeweilige Konstrukt werden erkannt
+       \item Unerwartetes Symbol oder unerwartetes Ende der Eingabe
+      \end{enumerate}
+      \item Operatorpräzedenz und Assoziativität durch hierarchischen Aufbau der Grammatik umgesetzt anstatt durch Features von ``happy'' 
+      \item Keine Shift/Reduce Konflikte oder Reduce/Reduce Konflikte, insbesondere bei Casts und Dangling-Else.
+    \end{enumerate}
+  \end{frame}
+  \begin{frame} %%Eine Folie
+    \frametitle{Probleme} %%Folientitel
+    \begin{enumerate}
+      \item Diverse Typfehler, die nur sehr schwer zu finden waren.
+      \item Viele Sprachkonstrukte lassen sich einfach in BNF darstellen aber führen dann zu Konflikten.
+      \item Viele unbekanntere Sprachkonstrukte, die ich selbst erst durch den Parser kennen gelernt habe, deren genauer Syntax nicht trivial ist.
+      \item For-Schleifen und Switch-Verzweigungen erfordern viele Regeln für wenig genutze Sonderfälle.
+      \item Unterscheidung von Statements mit folgendem Teilstatement und ``dem Rest'', Statements in Schleifen und Statements außerhalb von Schleifen.
+    \end{enumerate}
+  \end{frame}
+  
+  
+  
+  
+\end{document}
